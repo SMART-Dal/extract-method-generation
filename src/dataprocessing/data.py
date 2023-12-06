@@ -4,6 +4,7 @@ import os
 import shutil
 import stat
 import time
+import json
 import concurrent.futures
 
 def remove_folders(prefix):
@@ -35,6 +36,17 @@ def clone_repo(repo_url):
             continue
     raise Exception("Failed to clone repository")
 
+def generate_repository_details(input_file):
+
+    with open(input_file,'r',encoding="utf-8") as fp:
+        data = json.load(fp)
+        for item in data.get('items',[]):
+            yield item
+
+
+def process_repositories(item):
+    print(item)
+
 # def runRefactoringMiner():
 #     pass
 
@@ -46,25 +58,20 @@ def clone_repo(repo_url):
 
 
 if __name__=="__main__":
-    repo_url = ["https://github.com/danilofes/refactoring-toy-example.git"]*10
-    print("Cloning repo iteratively...")
+
+    print("Start processing")
     ti = time.time()
-    for i in range(10):
-        clone_result = clone_repo(repo_url[i])
-        # if not isinstance(clone_result, Exception):
-        #     print(clone_result)
-        #     print("Cloned repo successfully!")
-        # else:
-        #     print("Failed to clone repo!")
-    print("Time taken: ", time.time()-ti)
+    json_file_path = os.path.join(os.getcwd(), "data", "input", "results.json")
 
-
-
-    print("Cloning repo parallely...")
-    ti = time.time()
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        return_values = executor.map(clone_repo, repo_url) # returns a generator
+        executor.map(process_repositories, generate_repository_details(json_file_path))
 
-    print (list(return_values))
-    print("Time taken: ", time.time()-ti)
-    remove_folders("rl_poc_")
+
+
+    
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    #     return_values = executor.map(clone_repo, repo_url) # returns a generator
+
+    # print (list(return_values))
+    # print("Time taken: ", time.time()-ti)
+    # remove_folders("rl_poc_")
