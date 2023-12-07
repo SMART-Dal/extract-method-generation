@@ -23,9 +23,10 @@ handle_signal()
 {
     echo 'Trapped signal'
     echo 'Zipping output folder'
-    zip -r $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $project_location/data/output
+    zip -r $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $SLURM_TMPDIR/data/output
     
-    echo 'Moving File'
+    echo 'Moving Files'
+    rsync -axvH --no-g --no-p $SLURM_TMPDIR/extract-method-generation/data/logs $project_location/data/output
     rsync -axvH --no-g --no-p $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $project_location/data/output
     exit 0
 }
@@ -56,7 +57,7 @@ echo 'Zipping output folder'
 zip -r $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $project_location/data/output
 
 echo 'Moving File'
-rsync -axvH --no-g --no-p $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $project_location/data/output
+rsync -axvH --no-g --no-p $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $SLURM_TMPDIR/data/output
 
 
 echo "Completed data collection process."
