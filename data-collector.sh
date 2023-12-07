@@ -22,13 +22,18 @@ input_file_name=results.json
 handle_signal() 
 {
     echo 'Trapped signal'
+
+    move_files
+    
+    exit 0
+}
+
+move_files() 
+{
     echo 'Zipping output folder'
     zip -r $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $SLURM_TMPDIR/data/output
-    
     echo 'Moving Files'
-    rsync -axvH --no-g --no-p $SLURM_TMPDIR/extract-method-generation/data/logs $project_location/data/output
-    rsync -axvH --no-g --no-p $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $project_location/data/output
-    exit 0
+    rsync -axvH --no-g --no-p $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $SLURM_TMPDIR/data/output
 }
 
 trap 'handle_signal' SIGUSR1
@@ -53,13 +58,9 @@ wait ${PID}
 
 echo "Python Script execution over. Attempting to copy the output file..."
 
-echo 'Zipping output folder'
-zip -r $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $project_location/data/output
-
-echo 'Moving File'
-rsync -axvH --no-g --no-p $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $SLURM_TMPDIR/data/output
-
+move_files
 
 echo "Completed data collection process."
+
 
 

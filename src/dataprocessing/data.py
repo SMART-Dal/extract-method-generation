@@ -59,8 +59,8 @@ def process_repositories(item):
     output_path = os.path.join(os.getcwd(),"data","output",repository_name+".jsonl")
     repo_url = f"{GITHUB_BASE_URL}{name}.git"
     
-    os.makedirs(os.path.join(os.getcwd(),"logs"),exist_ok=True)
-    log_file = os.path.join(os.getcwd(),"logs", "log.txt")
+    os.makedirs(os.path.join(os.getcwd(),"data","output","logs"),exist_ok=True)
+    log_file = os.path.join(os.getcwd(),"data","output","logs", "log.txt")
     logging.basicConfig(filename=log_file, level=logging.INFO)
     try:
         result = subprocess.run(['java','-jar',jar_path,repo_url,output_path,default_branch],check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE, shell=True)
