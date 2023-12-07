@@ -3,8 +3,10 @@ import subprocess
 import os
 import shutil
 import stat
+import threading
 import time
 import json
+import logging
 import concurrent.futures
 
 def remove_folders(prefix):
@@ -22,8 +24,6 @@ def get_name_from_url(repo_url):
 
 def clone_repo(repo_url):
     '''Clone a repository from a URL'''
-    # print("Thread ID: ", threading.get_ident())
-    # print(time.time())
     repo_name = get_name_from_url(repo_url)
     folder_prefix = "rl_poc_"
     for _ in range(2):  # Try twice
@@ -37,25 +37,42 @@ def clone_repo(repo_url):
     raise Exception("Failed to clone repository")
 
 def generate_repository_details(input_file):
+    '''Generate repository details from the input file'''
 
-    with open(input_file,'r',encoding="utf-8") as fp:
+    with open(input_file,'r') as fp: #pylint: disable=unspecified-encoding
         data = json.load(fp)
         for item in data.get('items',[]):
             yield item
 
 
+lock = threading.Lock()
+
 def process_repositories(item):
-    print(item)
+    '''Process the repository'''
+    GITHUB_BASE_URL = "https://github.com/"
+    name = item.get('name')
+    repository_name = name.split('/')[-1]
+    default_branch = item.get('defaultBranch')
 
-# def runRefactoringMiner():
-#     pass
+    jar_path = os.path.join(os.getcwd(),"refminer-extractmethod","target","extract-method-extractor-1.0-jar-with-dependencies.jar")
+    output_path = os.path.join(os.getcwd(),"data","output",repository_name+".jsonl")
+    repo_url = f"{GITHUB_BASE_URL}{name}.git"
+    
+    log_file = os.path.join(os.getcwd(),"src","dataprocessing","logs", "log.txt")
+    logging.basicConfig(filename=log_file, level=logging.INFO)
+    try:
+        result = subprocess.run(['java','-jar',jar_path,repo_url,output_path,default_branch],check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE, shell=True)
+        with lock:
+            if result.returncode == 0:
+                logging.info("Successfully processed %s", name)
+            else:
+                logging.error(result.stderr.decode())
+    except subprocess.CalledProcessError as e:
+        with lock:
+            logging.error(e.stderr.decode())
+        return {"result":e.returncode, "name":name}
 
-# def extractMethodMetaData():
-#     pass
-
-# def extractMethodBody():
-#     pass
-
+    return {"result":result.returncode, "name":name}
 
 if __name__=="__main__":
 
@@ -64,14 +81,12 @@ if __name__=="__main__":
     json_file_path = os.path.join(os.getcwd(), "data", "input", "results.json")
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        executor.map(process_repositories, generate_repository_details(json_file_path))
+        repository_generator = generate_repository_details(json_file_path)
+        output = executor.map(process_repositories, repository_generator)
 
+    output_file_path = os.path.join(os.getcwd(), "data", "output", "output.json")
 
+    with open(output_file_path, 'w') as fp:
+        json.dump(list(output), fp)
 
-    
-    # with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-    #     return_values = executor.map(clone_repo, repo_url) # returns a generator
-
-    # print (list(return_values))
-    # print("Time taken: ", time.time()-ti)
-    # remove_folders("rl_poc_")
+    print("Output saved as:", output_file_path)
