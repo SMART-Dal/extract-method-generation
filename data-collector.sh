@@ -31,9 +31,9 @@ handle_signal()
 move_files() 
 {
     echo 'Zipping output folder'
-    zip -r $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $SLURM_TMPDIR/data/output
+    zip -r $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $SLURM_TMPDIR/extract-method-generation/data/output
     echo 'Moving Files'
-    rsync -axvH --no-g --no-p $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $SLURM_TMPDIR/data/output
+    rsync -axvH --no-g --no-p $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $SLURM_TMPDIR/extract-method-generation/data/output
 }
 
 trap 'handle_signal' SIGUSR1
