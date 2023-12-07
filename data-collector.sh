@@ -23,7 +23,7 @@ handle_signal()
     zip -r $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $project_location/data/output
     
     echo 'Moving File'
-    rsync -axvH --no-g --no-p $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $refresearch/data/output
+    rsync -axvH --no-g --no-p $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $project_location/data/output
     exit 0
 }
 
@@ -38,7 +38,7 @@ mvn clean package
 cd ..
 
 
-python -u src/main.py &
+python -u src/dataprocessing/data.py &
 
 PID=$!
 wait ${PID}
@@ -50,7 +50,7 @@ echo 'Zipping output folder'
 zip -r $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $project_location/data/output
 
 echo 'Moving File'
-rsync -axvH --no-g --no-p $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $refresearch/data/output
+rsync -axvH --no-g --no-p $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $project_location/data/output
 
 
 echo "Completed data collection process."
