@@ -59,6 +59,7 @@ def process_repositories(item):
     output_path = os.path.join(os.getcwd(),"data","output",repository_name+".jsonl")
     repo_url = f"{GITHUB_BASE_URL}{name}.git"
     
+    os.makedirs(os.path.join(os.getcwd(),"src","dataprocessing","logs"),exist_ok=True)
     log_file = os.path.join(os.getcwd(),"src","dataprocessing","logs", "log.txt")
     logging.basicConfig(filename=log_file, level=logging.INFO)
     try:
