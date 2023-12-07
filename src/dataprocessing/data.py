@@ -7,6 +7,7 @@ import threading
 import time
 import json
 import logging
+import sys
 import concurrent.futures
 
 def remove_folders(prefix):
@@ -78,7 +79,8 @@ if __name__=="__main__":
 
     print("Start processing")
     ti = time.time()
-    json_file_path = os.path.join(os.getcwd(), "data", "input", "results.json")
+    input_file = sys.argv[1]
+    json_file_path = os.path.join(os.getcwd(), "data", "input", input_file)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         repository_generator = generate_repository_details(json_file_path)

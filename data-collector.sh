@@ -7,6 +7,8 @@
 
 echo "Start"
 
+# Load modules
+module purge
 module load python/3.10
 module load java/17
 module load maven/3.6.3
@@ -14,7 +16,8 @@ module load maven/3.6.3
 export JAVA_TOOL_OPTIONS="-Xms256m -Xmx5g"
 
 output_file_name=output-$(date +%Y-%m-%d-%H-%M-%S)
-project_location=/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation
+project_location=`pwd`
+input_file_name=results.json
 
 handle_signal() 
 {
@@ -37,8 +40,11 @@ cd extract-method-generation/refminer-extractmethod
 mvn clean package
 cd ..
 
+# Move input file to the slurm folder
+echo "Copying input file to the slurm folder"
+rsync -axvH --no-g --no-p $project_location/data/input/$input_file_name $SLURM_TMPDIR/extract-method-generation/data/input/$input_file_name
 
-python -u src/dataprocessing/data.py &
+python -u src/dataprocessing/data.py $input_file_name &
 
 PID=$!
 wait ${PID}
