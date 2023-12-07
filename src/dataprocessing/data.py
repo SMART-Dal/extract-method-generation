@@ -89,4 +89,6 @@ if __name__=="__main__":
     with open(output_file_path, 'w') as fp:
         json.dump(list(output), fp)
 
+    print("Time taken: ", time.time()-ti)
+
     print("Output saved as:", output_file_path)
