@@ -12,7 +12,6 @@ module load java/17
 module load maven/3.6.3
 
 export JAVA_TOOL_OPTIONS="-Xms256m -Xmx5g"
-export PATH=$PATH:$SLURM_TMPDIR/extract-method-identification/executable/RefactoringMiner/bin
 
 output_file_name=output-$(date +%Y-%m-%d-%H-%M-%S)
 project_location=/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation
