@@ -63,10 +63,11 @@ def process_repositories(item):
     log_file = os.path.join(os.getcwd(),"data","output","logs", "log.txt")
     logging.basicConfig(filename=log_file, level=logging.INFO)
     try:
-        result = subprocess.run(['java','-jar',jar_path,repo_url,output_path,default_branch],check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE, shell=True)
+        result = subprocess.run(['java','-jar',jar_path,repo_url,output_path,default_branch],check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         with lock:
             if result.returncode == 0:
                 logging.info("Successfully processed %s", name)
+                print("Successfully processed %s", name)
             else:
                 logging.error(result.stderr.decode())
     except subprocess.CalledProcessError as e:

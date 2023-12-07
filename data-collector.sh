@@ -13,7 +13,8 @@ module load python/3.10
 module load java/17
 module load maven/3.6.3
 
-export JAVA_TOOL_OPTIONS="-Xms256m -Xmx5g"
+# export JAVA_TOOL_OPTIONS="-Xms256m -Xmx5g"
+unset JAVA_TOOL_OPTIONS
 
 output_file_name=output-$(date +%Y-%m-%d-%H-%M-%S)
 project_location=`pwd`
@@ -33,7 +34,7 @@ move_files()
     echo 'Zipping output folder'
     zip -r $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $SLURM_TMPDIR/extract-method-generation/data/output
     echo 'Moving Files'
-    rsync -axvH --no-g --no-p $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $SLURM_TMPDIR/extract-method-generation/data/output
+    rsync -axvH --no-g --no-p $SLURM_TMPDIR/extract-method-generation/data/output/$output_file_name.zip $project_location/data/output
 }
 
 trap 'handle_signal' SIGUSR1
