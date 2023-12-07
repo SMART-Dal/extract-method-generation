@@ -41,8 +41,7 @@ def generate_repository_details(input_file):
     '''Generate repository details from the input file'''
 
     with open(input_file,'rb') as fp: #pylint: disable=unspecified-encoding
-        with lock:
-            data = json.load(fp)
+        data = json.load(fp)
         for item in data.get('items',[]):
             yield item
 
@@ -80,8 +79,8 @@ if __name__=="__main__":
 
     print("Start processing")
     ti = time.time()
-    input_file = sys.argv[1]
-    json_file_path = os.path.join(os.getcwd(), "data", "input", input_file)
+    input_file_path = sys.argv[1]
+    json_file_path = os.path.join(os.getcwd(), "data", "input", input_file_path)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         repository_generator = generate_repository_details(json_file_path)
