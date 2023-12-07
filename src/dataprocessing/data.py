@@ -40,7 +40,7 @@ def clone_repo(repo_url):
 def generate_repository_details(input_file):
     '''Generate repository details from the input file'''
 
-    with open(input_file,'r') as fp: #pylint: disable=unspecified-encoding
+    with open(input_file,'rb') as fp: #pylint: disable=unspecified-encoding
         data = json.load(fp)
         for item in data.get('items',[]):
             yield item
