@@ -2,7 +2,7 @@
 #SBATCH --mem=64G
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=8
-#SBATCH --time=3:0:0
+#SBATCH --time=12:0:0
 #SBATCH --signal=B:USR1@360
 
 echo "Start"
