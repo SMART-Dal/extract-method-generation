@@ -166,3 +166,9 @@ logs/
 *.zip
 
 localscratch/
+
+sh/saved_models/*
+sh/tensorboard/*
+
+*.bin
+*.pt
