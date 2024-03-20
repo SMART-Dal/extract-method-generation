@@ -2,7 +2,7 @@
 #SBATCH --mem=64G
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=8
-#SBATCH --time=12:0:0
+#SBATCH --time=24:0:0
 #SBATCH --signal=B:USR1@360
 
 echo "Start"
@@ -43,7 +43,7 @@ cd $SLURM_TMPDIR
 git clone --recursive git@github.com:IP1102/extract-method-generation.git
 
 cd extract-method-generation/refminer-extractmethod
-
+git checkout 172a9fe8f3fe59d41cc6b438094ac4210a0a3faa
 mvn clean package
 cd ..
 
