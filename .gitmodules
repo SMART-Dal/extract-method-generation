@@ -1,3 +1,6 @@
 [submodule "refminer-extractmethod"]
 	path = refminer-extractmethod
 	url = git@github.com:IP1102/refminer-extractmethod.git
+[submodule "src/reinforcement-learning/rl-reward"]
+	path = src/reinforcement-learning/rl-reward
+	url = git@github.com:IP1102/rl-reward.git
