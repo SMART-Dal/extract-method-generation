@@ -156,8 +156,8 @@ def compute_metrics(eval_pred):
     decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
 
     # Rouge expects a newline after each sentence
-    decoded_preds = [["\n".join(nltk.sent_tokenize(pred.strip()))] for pred in decoded_preds]
-    decoded_labels = [[["\n".join(nltk.sent_tokenize(label.strip()))]] for label in decoded_labels]
+    decoded_preds = ["\n".join(nltk.sent_tokenize(pred.strip())) for pred in decoded_preds]
+    decoded_labels = ["\n".join(nltk.sent_tokenize(label.strip())) for label in decoded_labels]
     
     print("Preds:", decoded_preds)
     print("Labels:", decoded_labels)

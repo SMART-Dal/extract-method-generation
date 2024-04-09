@@ -34,9 +34,9 @@ def get_reward(smelly_code, refactored_code):
     edit_file(refactored_code, "refactored code committed")
     res = get_refactoring()
     if res.strip() == 'true':
-        print("1")
+        return 1
     else:
-        print("0")
+        return 0
 
 if __name__=="__main__":
     get_reward("public void sleep(){\nint s1 = 1;\nint s2 = 2;\nint s3 = 3;\nint s4 = 4;\nint s5 = 5;\nint s6 = 6;\nint s7 = 7;\nint s8 = 8;\n}",
