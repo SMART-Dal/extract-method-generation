@@ -13,3 +13,12 @@ module load maven/3.9.6
 unset JAVA_TOOL_OPTIONS
 
 # python -m venv .venv
+
+# Make sure to run this in the job node (srun terminal in interactive)
+if [ -d "$SLURM_TMPDIR/rl-template" ]; then
+    echo "rl-template already exists in $SLURM_TMPDIR"
+else
+    # If rl-template doesn't exist, copy it to $SLURM_TMPDIR
+    cp -r ../../rl-template/ "$SLURM_TMPDIR"
+    echo "rl-template copied to $SLURM_TMPDIR"
+fi

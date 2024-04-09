@@ -172,3 +172,5 @@ sh/tensorboard/*
 
 *.bin
 *.pt
+
+wandb/
