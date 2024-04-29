@@ -206,6 +206,7 @@ output_length_sampler = LengthSampler(output_min_length, output_max_length)
 model_save_path = script_args.model_save_path
 
 for epoch, batch in tqdm(enumerate(ppo_trainer.dataloader)):
+    print(batch)
     query_tensors = batch["input_ids"]
     print("QT:",len(query_tensors))
     print(query_tensors[0])
@@ -213,6 +214,8 @@ for epoch, batch in tqdm(enumerate(ppo_trainer.dataloader)):
     # Get response from the policy model
     response_tensors = []
     for query in query_tensors:
+        print("Query:", query)
+        print("Query Type:", type(query))
         gen_len = output_length_sampler()
         generation_kwargs["max_new_tokens"] = gen_len
         response = ppo_trainer.generate(query, **generation_kwargs)
@@ -232,6 +235,9 @@ for epoch, batch in tqdm(enumerate(ppo_trainer.dataloader)):
     rewards = [torch.tensor(output) for output in toxicity_labels]
     print("Reward Len:", len(rewards))
     print("Single Reward:", rewards[0])
+    print("Single Reward Type:", type(rewards[0]))
+    print("Rewards type:", type(rewards))
+
     # Run PPO step
     stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
     ppo_trainer.log_stats(stats, batch, rewards)

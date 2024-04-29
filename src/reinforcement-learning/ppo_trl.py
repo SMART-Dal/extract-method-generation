@@ -61,19 +61,14 @@ class CustomDataset(Dataset):
         features, target = self.data[idx]
         inputs = self.tokenizer(features, return_tensors="pt", padding="max_length", max_length=512, truncation=True)
         labels = self.tokenizer(target, return_tensors="pt", padding="max_length", max_length=512, truncation=True)
-        # return {"input_ids": inputs.input_ids.squeeze(0), "attention_mask": inputs.attention_mask, "labels": labels.input_ids}
-        return {"input_ids": inputs["input_ids"].squeeze(0), "attention_mask": inputs["attention_mask"].squeeze(0), "labels": labels["input_ids"].squeeze(0)}
-        # return inputs, labels    
+        return {"input_ids": inputs["input_ids"].squeeze(0), "attention_mask": inputs["attention_mask"].squeeze(0), "labels": labels["input_ids"].squeeze(0)} 
 
 def custom_collator(data):
     batch = {}
     for key in data[0].keys():
-        if key == "input_ids" or key == "attention_mask" or key == "labels":
-            batch[key] = torch.stack([sample[key] for sample in data])
-        else:
-            batch[key] = [sample[key] for sample in data]
+        # Collect elements as lists to preserve individual structure
+        batch[key] = [sample[key] for sample in data]
     return batch
-
 
 
 parser = HfArgumentParser(ScriptArguments)
@@ -83,7 +78,6 @@ print(script_args)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 tokenizer = AutoTokenizer.from_pretrained(script_args.tokenizer_name)
-# model = AutoModelForSeq2SeqLM.from_pretrained(script_args.model_name)
 
 model = AutoModelForSeq2SeqLMWithValueHead.from_pretrained(script_args.model_name)
 
@@ -102,9 +96,6 @@ config = PPOConfig(
     batch_size=script_args.batch_size,
     gradient_accumulation_steps=script_args.gradient_accumulation_steps,
 )
-
-# /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/CodeT5/CodeT5/sh/saved_models/refactoring/codet5_small_all_lr5_bs32_src320_trg256_pat5_e100/checkpoint-best-bleu/
-
 
 # # set seed before initializing value head for deterministic eval
 set_seed(config.seed)
@@ -139,26 +130,14 @@ model_save_path = script_args.model_save_path
 
 for epoch, batch in tqdm(enumerate(ppo_trainer.dataloader)):
     query_tensors = batch["input_ids"]
-    # print(tokenizer.decode(batch["labels"].squeeze()))
-    print("QT:",len(query_tensors))
-    print(query_tensors[0])    
-    print(type(query_tensors))
     print("========================GEN===========================")
-    # print(query_tensors)
-    # reponse=respond_to_batch(model, query_tensors)
-    # print(reponse)
     response_tensors = []
     for query in query_tensors:
         gen_len = output_length_sampler()
         generation_kwargs["max_new_tokens"] = gen_len
         response = ppo_trainer.generate(query, **generation_kwargs)
         response_tensors.append(response.squeeze()[-gen_len:])
-        # print(tokenizer.decode(response.squeeze(), skip_special_tokens=True))
-        # rewards.append(torch.tensor(get_reward(tokenizer.decode(query.squeeze(), skip_special_tokens=True), tokenizer.decode(reponse.squeeze(), skip_special_tokens=True))))
-    # batch["response"] = [tokenizer.decode(r.squeeze(), skip_special_tokens=True) for r in response_tensors]
-    print("RT:", len(response_tensors))
-    # print("Batch Resp:", len(batch["response"]))
-    print("BR:", response_tensors[0])        
+    
     rewards = []
 
     for query, response in zip(query_tensors, response_tensors):
@@ -167,12 +146,7 @@ for epoch, batch in tqdm(enumerate(ppo_trainer.dataloader)):
         reward = get_reward(smelly_code_sample, refactored_code)
         rewards.append(torch.tensor(reward))
 
-    print("Reward Len:", len(rewards))
-    print("Single Reward:", rewards[0])    
-
-    print("QT:",len(query_tensors))
-    print(query_tensors[0])    
-    print(type(query_tensors))    
+    assert len(query_tensors) == len(response_tensors) == len(rewards)
 
     # # Run PPO step
     stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
