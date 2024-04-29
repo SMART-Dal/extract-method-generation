@@ -174,3 +174,4 @@ sh/tensorboard/*
 *.pt
 
 wandb/
+ppo-output/
