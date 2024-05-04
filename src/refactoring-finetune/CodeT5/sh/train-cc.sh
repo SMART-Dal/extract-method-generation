@@ -6,4 +6,5 @@
 #SBATCH --time=12:0:0
 #SBATCH --signal=B:USR1@180
 
-python run_exp.py --model_tag codet5_small --task refactoring
+source ../../.venv/bin/activate
+python run_exp.py --model_tag $1 --task refactoring
