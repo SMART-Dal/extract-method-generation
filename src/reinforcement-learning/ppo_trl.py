@@ -111,7 +111,7 @@ ppo_trainer = PPOTrainer(
     tokenizer=tokenizer,
     dataset=train_dataset,
     data_collator=custom_collator,
-    optimizer=optimizer,
+    optimizer=optimizer
 )
 
 generation_kwargs = {
