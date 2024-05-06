@@ -137,7 +137,7 @@ for epoch, batch in tqdm(enumerate(ppo_trainer.dataloader)):
         generation_kwargs["max_new_tokens"] = gen_len
         response = ppo_trainer.generate(query, **generation_kwargs)
         response_tensors.append(response.squeeze()[-gen_len:])
-    
+    batch["response_ids"] = response_tensors
     rewards = []
 
     for query, response in zip(query_tensors, response_tensors):
@@ -150,7 +150,7 @@ for epoch, batch in tqdm(enumerate(ppo_trainer.dataloader)):
 
     # # Run PPO step
     stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
-    ppo_trainer.log_stats(stats, batch, rewards)
+    ppo_trainer.log_stats(stats, batch, rewards, columns_to_log=["input_ids","response_ids"])
 
     # Save model every 100 epochs
     if epoch % 10 == 0:
