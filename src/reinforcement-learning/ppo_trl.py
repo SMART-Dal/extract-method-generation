@@ -95,6 +95,7 @@ config = PPOConfig(
     mini_batch_size=script_args.mini_batch_size,
     batch_size=script_args.batch_size,
     gradient_accumulation_steps=script_args.gradient_accumulation_steps,
+    ratio_threshold=200
 )
 
 # # set seed before initializing value head for deterministic eval
@@ -156,3 +157,6 @@ for epoch, batch in tqdm(enumerate(ppo_trainer.dataloader)):
     if epoch % 10 == 0:
         if ppo_trainer.accelerator.is_main_process:
             ppo_trainer.save_pretrained(model_save_path)
+
+ppo_trainer.save_pretrained(model_save_path)
+print("End of program")

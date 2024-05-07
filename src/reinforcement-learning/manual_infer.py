@@ -4,7 +4,8 @@ import pandas as pd
 from transformers import T5Config, T5ForConditionalGeneration, RobertaTokenizer
 
 tokenizer = RobertaTokenizer.from_pretrained("Salesforce/codet5-small")
-model = T5ForConditionalGeneration.from_pretrained("/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/CodeT5/sh/saved_models/refactoring/codet5_small_all_lr5_bs32_src320_trg256_pat5_e100/checkpoint-best-bleu")
+# model = T5ForConditionalGeneration.from_pretrained("/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/CodeT5/sh/saved_models/refactoring/codet5_small_all_lr5_bs32_src320_trg256_pat5_e100/checkpoint-best-bleu")
+model = T5ForConditionalGeneration.from_pretrained("/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/reinforcement-learning/ppo-output")
 
 model = model.to('cuda')
 
@@ -23,4 +24,4 @@ with open("/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-g
         ls_data.append([example["Smelly Sample"].replace("\t"," "),example["Method after Refactoring"].replace("\t"," ") + example["Extracted Method"].replace("\t"," "), ft])
 
 df = pd.DataFrame(ls_data,columns=['ss','gt','ft'])
-df.to_csv('output.csv', index=False)
+df.to_csv('output_rl.csv', index=False)
