@@ -1,10 +1,21 @@
 import torch
+import sys
 from datasets import load_dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments, Trainer, DataCollatorForSeq2Seq
 from datetime import datetime
+from peft import (
+    LoraConfig,
+    get_peft_model,
+    get_peft_model_state_dict,
+    prepare_model_for_kbit_training,
+    set_peft_model_state_dict,
+)
 
-train_dataset = load_dataset("json", data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/reinforcement-learning/test-data/train.jsonl", split='train')
-eval_dataset = load_dataset("json", data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/reinforcement-learning/test-data/val.jsonl", split='train')
+train_file = sys.argv[1]
+eval_file = sys.argv[2]
+
+train_dataset = load_dataset("json", data_files=train_file, split='train')
+eval_dataset = load_dataset("json", data_files=eval_file, split='train')
 
 # print(dataset[1].keys())
 
@@ -52,6 +63,30 @@ tokenized_train_dataset = train_dataset.map(generate_and_tokenize_prompt)
 tokenized_val_dataset = eval_dataset.map(generate_and_tokenize_prompt)
 
 model.train()
+
+model = prepare_model_for_kbit_training(model)
+
+config = LoraConfig(
+    r=16,
+    lora_alpha=16,
+    target_modules=[
+    "q_proj",
+    "k_proj",
+    "v_proj",
+    "o_proj",
+],
+    lora_dropout=0.05,
+    bias="none",
+    task_type="CAUSAL_LM",
+)
+model = get_peft_model(model, config)
+
+if torch.cuda.device_count() > 1:
+    # keeps Trainer from trying its own DataParallelism when more than 1 gpu is available
+    model.is_parallelizable = True
+    model.model_parallel = True
+
+
 batch_size = 128
 per_device_train_batch_size = 32
 gradient_accumulation_steps = batch_size // per_device_train_batch_size
@@ -87,3 +122,4 @@ trainer = Trainer(
     ),
 )
 
+trainer.train()
