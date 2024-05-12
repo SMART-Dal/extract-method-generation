@@ -180,3 +180,4 @@ results/
 tensorboard/
 src/refactoring-finetune/CodeT5/data/
 *.csv
+!src/reinforcement-learning/test-data/*
