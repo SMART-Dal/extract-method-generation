@@ -1,7 +1,22 @@
 import numpy as np
+import os
+import json
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from tqdm import tqdm
+
+def generate_modified_data(dataset, tokenizer, file_name):
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    output_dir = os.path.join(project_root, "data", "dl-no-context-len")
+    os.makedirs(output_dir, exist_ok=True)
+    with open(os.path.join(output_dir, f'{file_name}.jsonl'), 'w') as f:
+        for data in tqdm(dataset):
+            if len(tokenizer.tokenize(data["Smelly Sample"])) > 512:
+                continue
+            if len(tokenizer.tokenize(str(data["Method after Refactoring"]))) > 512:
+                continue
+            sample = {"Input": str(data["Smelly Sample"]), "Output": str(data["Method after Refactoring"])}
+            f.write(json.dumps(sample) + '\n')
 
 def calc_stats(examples, tokenizer=None, is_tokenize=False):
     avg_src_len = []
@@ -10,14 +25,27 @@ def calc_stats(examples, tokenizer=None, is_tokenize=False):
     avg_src_len_tokenize = []
     avg_trg_len_tokenize = []
     avg_trg_collated_len_tokenize = []
+    src_count, trg_count, trg_col_count = 0,0,0
     for ex in tqdm(examples):
         if is_tokenize:
             avg_src_len.append(len(str(ex["Smelly Sample"]).split()))
             avg_trg_len.append(len(str(ex["Method after Refactoring"]).split()))
             avg_trg_col_len.append(len(str(ex["Method after Refactoring"]).split())+len(str(ex['Extracted Method']).split()))
-            avg_src_len_tokenize.append(len(tokenizer.tokenize(ex["Smelly Sample"])))
-            avg_trg_len_tokenize.append(len(tokenizer.tokenize(str(ex["Method after Refactoring"]))))
-            avg_trg_collated_len_tokenize.append(len(tokenizer.tokenize(str(ex["Method after Refactoring"]+str(ex['Extracted Method'])))))
+            
+            tmp = len(tokenizer.tokenize(ex["Smelly Sample"]))
+            if tmp>512:
+                src_count+=1
+            avg_src_len_tokenize.append(tmp)
+            
+            tmp = len(tokenizer.tokenize(str(ex["Method after Refactoring"])))
+            if tmp>512:
+                trg_count+=1
+            avg_trg_len_tokenize.append(tmp)
+            
+            tmp = len(tokenizer.tokenize(str(ex["Method after Refactoring"]+str(ex['Extracted Method']))))
+            if tmp>512:
+                trg_col_count+=1
+                avg_trg_collated_len_tokenize.append(tmp)
         else:
             avg_src_len.append(len(ex.source.split()))
             avg_trg_len.append(len(str(ex.target).split()))
@@ -27,6 +55,7 @@ def calc_stats(examples, tokenizer=None, is_tokenize=False):
         print("[TOKENIZE] avg src len: %d, avg trg len: %d, avg trg len col: %d, max src len: %d, max trg len: %d, max trg len col: %d", 
                     np.mean(avg_src_len_tokenize), np.mean(avg_trg_len_tokenize), np.mean(avg_trg_collated_len_tokenize), max(avg_src_len_tokenize),
                     max(avg_trg_len_tokenize), max(avg_trg_collated_len_tokenize))
+        print("[TOKENIZE] src count above model max: %d, target count above model max: %d, target col above model max: %d", src_count, trg_count, trg_col_count)
     else:
         print("Read %d examples, avg src len: %d, avg trg len: %d, max src len: %d, max trg len: %d",
                     len(examples), np.mean(avg_src_len), np.mean(avg_trg_len), max(avg_src_len), max(avg_trg_len))
@@ -34,10 +63,17 @@ def calc_stats(examples, tokenizer=None, is_tokenize=False):
 
 if __name__=="__main__":
     tokenizer = AutoTokenizer.from_pretrained("Salesforce/codet5-small")
-    # model = AutoModelForSeq2SeqLM.from_pretrained("Salesforce/codet5-small")
-    calc_stats(load_dataset("json",
+    # print(tokenizer.__dict__)
+    # # model = AutoModelForSeq2SeqLM.from_pretrained("Salesforce/codet5-small")
+    # calc_stats(load_dataset("json",
+    #                         data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context/train.jsonl",
+    #                         split='train'),
+    #             tokenizer,
+    #             True
+    #            )
+    generate_modified_data(load_dataset("json",
                             data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context/train.jsonl",
                             split='train'),
-                tokenizer,
-                True
-               )
+                            tokenizer,
+                            "train"
+                            )
