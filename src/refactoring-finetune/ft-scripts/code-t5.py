@@ -1,9 +1,16 @@
 import torch
 import evaluate
+import numpy as np
 from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, DataCollatorForSeq2Seq
+from transformers import (
+    AutoTokenizer, 
+    AutoModelForSeq2SeqLM, 
+    DataCollatorForSeq2Seq, 
+    Seq2SeqTrainer,
+    Seq2SeqTrainingArguments
+    )
 
-train_dataset = load_dataset(data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context/train.jsonl",
+train_dataset = load_dataset("json",data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context/train.jsonl",
                     split="train")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -12,8 +19,13 @@ tokenizer = AutoTokenizer.from_pretrained("Salesforce/codet5-small")
 model = AutoModelForSeq2SeqLM.from_pretrained("Salesforce/codet5-small")
 
 def preprocess_function(examples):
-    inputs = [ex["Smelly Sample"] for ex in examples]
-    targets = [ex["Method after Refactoring"] for ex in examples]
+    # for e in examples:
+    #     print(e)
+    #     break
+    # inputs = [ex["Smelly Sample"] for ex in examples]
+    # targets = [ex["Method after Refactoring"] for ex in examples]
+    inputs = examples["Smelly Sample"]
+    targets = examples["Method after Refactoring"]
 
     padding = "max_length"
     # inputs = [prefix + inp for inp in inputs]
@@ -61,3 +73,59 @@ data_collator = DataCollatorForSeq2Seq(
 #         label_pad_token_id=label_pad_token_id,
 #         # pad_to_multiple_of=8 if training_args.fp16 else None,
 #     )
+
+def postprocess_text(preds, labels):
+    preds = [pred.strip() for pred in preds]
+    labels = [[label.strip()] for label in labels]
+
+    return preds, labels
+
+def compute_metrics(eval_preds):
+    preds, labels = eval_preds
+    if isinstance(preds, tuple):
+        preds = preds[0]
+    # Replace -100s used for padding as we can't decode them
+    preds = np.where(preds != -100, preds, tokenizer.pad_token_id)
+    decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=True)
+    labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
+    decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
+
+    # Some simple post-processing
+    decoded_preds, decoded_labels = postprocess_text(decoded_preds, decoded_labels)
+
+    result = metric.compute(predictions=decoded_preds, references=decoded_labels)
+    result = {"bleu": result["score"]}
+
+    prediction_lens = [np.count_nonzero(pred != tokenizer.pad_token_id) for pred in preds]
+    result["gen_len"] = np.mean(prediction_lens)
+    result = {k: round(v, 4) for k, v in result.items()}
+    return result
+
+# training_args = Seq2SeqTrainingArguments(
+#     do_train=True,
+#     device=device
+# )
+
+trainer = Seq2SeqTrainer(
+    model=model,
+    # device='cuda',
+    # args=training_args,
+    train_dataset=train_dataset,
+    tokenizer=tokenizer,
+    data_collator=data_collator,
+    compute_metrics=compute_metrics
+)
+
+train_result = trainer.train()
+
+trainer.save_model()
+
+metrics = train_result.metrics
+# max_train_samples = (
+#     data_args.max_train_samples if data_args.max_train_samples is not None else len(train_dataset)
+# )
+# metrics["train_samples"] = min(max_train_samples, len(train_dataset))
+
+trainer.log_metrics("train", metrics)
+trainer.save_metrics("train", metrics)
+trainer.save_state()
