@@ -10,7 +10,11 @@ from transformers import (
     Seq2SeqTrainingArguments
     )
 
-train_dataset = load_dataset("json",data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context/train.jsonl",
+
+train_dataset = load_dataset("json",data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context-len/train.jsonl",
+                    split="train")
+
+eval_dataset = load_dataset("json",data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context-len/val.jsonl",
                     split="train")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -24,8 +28,10 @@ def preprocess_function(examples):
     #     break
     # inputs = [ex["Smelly Sample"] for ex in examples]
     # targets = [ex["Method after Refactoring"] for ex in examples]
-    inputs = examples["Smelly Sample"]
-    targets = examples["Method after Refactoring"]
+    # inputs = examples["Smelly Sample"]
+    # targets = examples["Method after Refactoring"]
+    inputs = examples["Input"]
+    targets = examples["Output"]    
 
     padding = "max_length"
     # inputs = [prefix + inp for inp in inputs]
@@ -51,6 +57,12 @@ train_dataset = train_dataset.map(
     # remove_columns=column_names,
     # load_from_cache_file=not data_args.overwrite_cache,
     desc="Running tokenizer on train dataset",
+)
+
+eval_dataset = eval_dataset.map(
+    preprocess_function,
+    batched=True,
+    desc="Running tokenizer on eval dataset"
 )
 
 metric = evaluate.load("sacrebleu", cache_dir="./cache_dir")
@@ -101,16 +113,20 @@ def compute_metrics(eval_preds):
     result = {k: round(v, 4) for k, v in result.items()}
     return result
 
-# training_args = Seq2SeqTrainingArguments(
-#     do_train=True,
-#     device=device
-# )
+training_args = Seq2SeqTrainingArguments(
+    output_dir="./output",
+    predict_with_generate=True,
+    evaluation_strategy="epoch",
+    num_train_epochs=5,
+    generation_max_length=512
+)
 
 trainer = Seq2SeqTrainer(
     model=model,
     # device='cuda',
-    # args=training_args,
+    args=training_args,
     train_dataset=train_dataset,
+    eval_dataset=eval_dataset,
     tokenizer=tokenizer,
     data_collator=data_collator,
     compute_metrics=compute_metrics
