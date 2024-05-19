@@ -181,3 +181,7 @@ tensorboard/
 src/refactoring-finetune/CodeT5/data/
 *.csv
 !src/reinforcement-learning/test-data/*
+src/reinforcement-learning/pre_trained_weights/*
+*.lock
+
+*output/
