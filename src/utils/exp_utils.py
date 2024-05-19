@@ -59,10 +59,48 @@ def calc_stats(examples, tokenizer=None, is_tokenize=False):
         print("[TOKENIZE] src count above model max: %d, target count above model max: %d, target col above model max: %d", src_count, trg_count, trg_col_count)
         print("Read %d examples, avg src len: %d, avg trg len: %d, max src len: %d, max trg len: %d",
                     len(examples), np.mean(avg_src_len), np.mean(avg_trg_len), max(avg_src_len), max(avg_trg_len))
+
+def calc_stats_mod_method(examples, tokenizer=None):
+    avg_src_len = []
+    avg_trg_len = []
+    avg_trg_col_len = []
+    avg_src_len_tokenize = []
+    avg_trg_len_tokenize = []
+    avg_trg_collated_len_tokenize = []
+    src_count, trg_count, trg_col_count = 0,0,0
+    for ex in tqdm(examples):
+
+        avg_src_len.append(len(str(ex["Input"]).split()))
+        avg_trg_len.append(len(str(ex["Output"]).split()))
+        # avg_trg_col_len.append(len(str(ex["Output"]).split())+len(str(ex['Extracted Method']).split()))
         
+        tmp = len(tokenizer.tokenize(ex["Input"]))
+        if tmp>512:
+            src_count+=1
+        avg_src_len_tokenize.append(tmp)
+        
+        tmp = len(tokenizer.tokenize(str(ex["Output"])))
+        if tmp>512:
+            trg_count+=1
+        avg_trg_len_tokenize.append(tmp)
+        
+        # tmp = len(tokenizer.tokenize(str(ex["Output"]+str(ex['Extracted Method']))))
+        # if tmp>512:
+        #     trg_col_count+=1
+        #     avg_trg_collated_len_tokenize.append(tmp)
+
+        # avg_src_len.append(len(ex.source.split()))
+        # avg_trg_len.append(len(str(ex.target).split()))
+
+
+    print(f"Read {len(examples)} examples, avg src len: {np.mean(avg_src_len)}, avg trg len: {np.mean(avg_trg_len)}, max src len: {max(avg_src_len)}, max trg len: {max(avg_trg_len)}")
+    print(f"[TOKENIZE] avg src len: {np.mean(avg_src_len_tokenize)}, avg trg len: {np.mean(avg_trg_len_tokenize)}, max src len: {max(avg_src_len_tokenize)}, max trg len: {max(avg_trg_len_tokenize)}")
+    print(f"[TOKENIZE] src count above model max: {src_count}, target count above model max: {trg_count}")
+    print(f"Read {len(examples)} examples, avg src len: {np.mean(avg_src_len)}, avg trg len: {np.mean(avg_trg_len)}, max src len: {max(avg_src_len)}, max trg len: {max(avg_trg_len)}")
+
 
 if __name__=="__main__":
-    # tokenizer = AutoTokenizer.from_pretrained("Salesforce/codet5-small")
+    tokenizer = AutoTokenizer.from_pretrained("Salesforce/codet5-small")
     # print(tokenizer.__dict__)
     # # model = AutoModelForSeq2SeqLM.from_pretrained("Salesforce/codet5-small")
     # calc_stats(load_dataset("json",
@@ -72,19 +110,17 @@ if __name__=="__main__":
     #             True
     #            )
     # generate_modified_data(load_dataset("json",
-    #                         data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context/train.jsonl",
+    #                         data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context/val.jsonl",
     #                         split='train'),
     #                         tokenizer,
-    #                         "train"
+    #                         "val"
     #                         )
-    def test(example):
-        print(example['Extracted Method'])
-        
-    
-    train_data = load_dataset("json",
-                            data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context/val.jsonl",
-                            split="train")
-    # print(train_data[1]['Extracted Method'])
-    td = train_data.map(test)
+    calc_stats_mod_method(load_dataset(
+        "json",
+        data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context-len/val.jsonl",
+        split="train",
+    ),
+    tokenizer)
+
     
     
