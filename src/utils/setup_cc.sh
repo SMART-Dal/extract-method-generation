@@ -19,6 +19,6 @@ if [ -d "$SLURM_TMPDIR/rl-template" ]; then
     echo "rl-template already exists in $SLURM_TMPDIR"
 else
     # If rl-template doesn't exist, copy it to $SLURM_TMPDIR
-    cp -r ../../rl-template/ "$SLURM_TMPDIR"
+    cp -r /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/rl-template/ "$SLURM_TMPDIR"
     echo "rl-template copied to $SLURM_TMPDIR"
 fi
