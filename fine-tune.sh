@@ -8,7 +8,12 @@
 #SBATCH --mail-user=indranil.palit@dal.ca
 #SBATCH --mail-type=ALL
 
-project_location=`pwd`
+project_location="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation"
+
+RUN_NAME={$1}
+OUTPUT_FOLDER=${2}
+
+cd $project_location
 
 source src/utils/setup_cc.sh
 
@@ -16,4 +21,9 @@ source .venv/bin/activate
 
 cd src/refactoring-finetune/ft-scripts/
 
-python code-t5.py --model_save_path ./output/codet5-ft --run_name code-t5-ft --train_data_file_path $project_location/data/dl-no-context-len/train.jsonl --eval_data_file_path $project_location/data/dl-no-context-len/val.jsonl --num_epochs 1
+python supervised_fine_tune.py \
+--model_save_path $OUTPUT_FOLDER \
+--run_name $RUN_NAME \
+--train_data_file_path $project_location/data/dl-no-context-len/train.jsonl \
+--eval_data_file_path $project_location/data/dl-no-context-len/val.jsonl \
+--num_epochs 5
