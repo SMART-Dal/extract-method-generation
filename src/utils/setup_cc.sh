@@ -15,10 +15,14 @@ unset JAVA_TOOL_OPTIONS
 # python -m venv .venv
 
 # Make sure to run this in the job node (srun terminal in interactive)
-if [ -d "$SLURM_TMPDIR/rl-template" ]; then
-    echo "rl-template already exists in $SLURM_TMPDIR"
+if [ -n "$SLURM_TMPDIR" ]; then
+    if [ -d "$SLURM_TMPDIR/rl-template" ]; then
+        echo "rl-template already exists in $SLURM_TMPDIR"
+    else
+        # If rl-template doesn't exist, copy it to $SLURM_TMPDIR
+        cp -r /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/rl-template/ "$SLURM_TMPDIR"
+        echo "rl-template copied to $SLURM_TMPDIR"
+    fi
 else
-    # If rl-template doesn't exist, copy it to $SLURM_TMPDIR
-    cp -r /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/rl-template/ "$SLURM_TMPDIR"
-    echo "rl-template copied to $SLURM_TMPDIR"
+    echo "SLURM_TMPDIR is empty"
 fi

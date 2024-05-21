@@ -18,7 +18,7 @@ def generate_modified_data(dataset, tokenizer, file_name):
             sample = {"Input": str(data["Smelly Sample"]), "Output": str(data["Method after Refactoring"])}
             f.write(json.dumps(sample) + '\n')
 
-def calc_stats(examples, tokenizer=None, is_tokenize=False):
+def calc_stats(examples, tokenizer=None):
     avg_src_len = []
     avg_trg_len = []
     avg_trg_col_len = []
@@ -45,20 +45,18 @@ def calc_stats(examples, tokenizer=None, is_tokenize=False):
         tmp = len(tokenizer.tokenize(str(ex["Method after Refactoring"]+str(ex['Extracted Method']))))
         if tmp>512:
             trg_col_count+=1
-            avg_trg_collated_len_tokenize.append(tmp)
+        avg_trg_collated_len_tokenize.append(tmp)
 
-        avg_src_len.append(len(ex.source.split()))
-        avg_trg_len.append(len(str(ex.target).split()))
+        # avg_src_len.append(len(ex.source.split()))
+        # avg_trg_len.append(len(str(ex.target).split()))
 
 
-        print("Read %d examples, avg src len: %d, avg trg len: %d, avg trg col len: %d, max src len: %d, max trg len: %d, max trg len col: %d",
-                    len(examples), np.mean(avg_src_len), np.mean(avg_trg_len), np.mean(avg_trg_col_len), max(avg_src_len), max(avg_trg_len), max(avg_trg_col_len))
-        print("[TOKENIZE] avg src len: %d, avg trg len: %d, avg trg len col: %d, max src len: %d, max trg len: %d, max trg len col: %d", 
-                    np.mean(avg_src_len_tokenize), np.mean(avg_trg_len_tokenize), np.mean(avg_trg_collated_len_tokenize), max(avg_src_len_tokenize),
-                    max(avg_trg_len_tokenize), max(avg_trg_collated_len_tokenize))
-        print("[TOKENIZE] src count above model max: %d, target count above model max: %d, target col above model max: %d", src_count, trg_count, trg_col_count)
-        print("Read %d examples, avg src len: %d, avg trg len: %d, max src len: %d, max trg len: %d",
-                    len(examples), np.mean(avg_src_len), np.mean(avg_trg_len), max(avg_src_len), max(avg_trg_len))
+    print(f"Read {len(examples)} examples \navg src len: {np.mean(avg_src_len)}\n avg trg len: {np.mean(avg_trg_len)}\n avg trg col len: {np.mean(avg_trg_col_len)} \
+            \n max src len: {max(avg_src_len)}\n max trg len: {max(avg_trg_len)}\n max trg len col: {max(avg_trg_col_len)}")
+    print(f"[TOKENIZE] avg src len: {np.mean(avg_src_len_tokenize)}\n avg trg len: {np.mean(avg_trg_len_tokenize)}\n avg trg len col: {np.mean(avg_trg_collated_len_tokenize)}\n max src len: {max(avg_src_len_tokenize)}\n max trg len: {max(avg_trg_len_tokenize)}\n max trg len col: {max(avg_trg_collated_len_tokenize)}")
+    print(f"[TOKENIZE] src count above model max: {src_count} \n target count above model max: {trg_count}\n target col above model max: {trg_col_count}")
+        # print("Read %d examples, avg src len: %d, avg trg len: %d, max src len: %d, max trg len: %d",
+        #             len(examples), np.mean(avg_src_len), np.mean(avg_trg_len), max(avg_src_len), max(avg_trg_len))
 
 def calc_stats_mod_method(examples, tokenizer=None):
     avg_src_len = []
@@ -103,24 +101,23 @@ if __name__=="__main__":
     tokenizer = AutoTokenizer.from_pretrained("Salesforce/codet5-small")
     # print(tokenizer.__dict__)
     # # model = AutoModelForSeq2SeqLM.from_pretrained("Salesforce/codet5-small")
-    # calc_stats(load_dataset("json",
-    #                         data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context/train.jsonl",
-    #                         split='train'),
-    #             tokenizer,
-    #             True
-    #            )
+    calc_stats(load_dataset("json",
+                            data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context/train.jsonl",
+                            split='train'),
+                tokenizer
+               )
     # generate_modified_data(load_dataset("json",
     #                         data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context/val.jsonl",
     #                         split='train'),
     #                         tokenizer,
     #                         "val"
     #                         )
-    calc_stats_mod_method(load_dataset(
-        "json",
-        data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context-len/val.jsonl",
-        split="train",
-    ),
-    tokenizer)
+    # calc_stats_mod_method(load_dataset(
+    #     "json",
+    #     data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context-len/val.jsonl",
+    #     split="train",
+    # ),
+    # tokenizer)
 
     
     
