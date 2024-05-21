@@ -2,7 +2,7 @@
 #SBATCH --mem=64G
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=8
-#SBATCH --time=12:0:0
+#SBATCH --time=6:0:0
 #SBATCH --gres=gpu:v100l:1
 #SBATCH --signal=B:USR1@360
 #SBATCH --mail-user=indranil.palit@dal.ca

@@ -152,12 +152,13 @@ training_args = Seq2SeqTrainingArguments(
     output_dir=script_args.model_save_path,
     overwrite_output_dir=True,
     predict_with_generate=True,
-    evaluation_strategy="steps",
+    # evaluation_strategy="steps",
+    evaluation_strategy="epoch",
     num_train_epochs=script_args.num_epochs,
     generation_max_length=512,
-    logging_steps=10,
+    # logging_steps=10,
     metric_for_best_model="bleu",
-    load_best_model_at_end=True
+    # load_best_model_at_end=True
 )
 
 early_stop = EarlyStoppingCallback(2, 1.0)
@@ -171,7 +172,7 @@ trainer = Seq2SeqTrainer(
     tokenizer=tokenizer,
     data_collator=data_collator,
     compute_metrics=compute_metrics,
-    callbacks=[early_stop]
+    # callbacks=[early_stop]
 )
 
 train_result = trainer.train()

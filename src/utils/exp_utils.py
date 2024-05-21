@@ -13,9 +13,9 @@ def generate_modified_data(dataset, tokenizer, file_name):
         for data in tqdm(dataset):
             if len(tokenizer.tokenize(data["Smelly Sample"])) > 512:
                 continue
-            if len(tokenizer.tokenize(str(data["Method after Refactoring"]))) > 512:
+            if len(tokenizer.tokenize(str(data["Method after Refactoring"])+str(data['Extracted Method']))) > 512:
                 continue
-            sample = {"Input": str(data["Smelly Sample"]), "Output": str(data["Method after Refactoring"])}
+            sample = {"Input": str(data["Smelly Sample"]), "Output": str(data["Method after Refactoring"])+"\n"+str(data['Extracted Method'])}
             f.write(json.dumps(sample) + '\n')
 
 def calc_stats(examples, tokenizer=None):
@@ -101,17 +101,17 @@ if __name__=="__main__":
     tokenizer = AutoTokenizer.from_pretrained("Salesforce/codet5-small")
     # print(tokenizer.__dict__)
     # # model = AutoModelForSeq2SeqLM.from_pretrained("Salesforce/codet5-small")
-    calc_stats(load_dataset("json",
-                            data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context/train.jsonl",
-                            split='train'),
-                tokenizer
-               )
-    # generate_modified_data(load_dataset("json",
-    #                         data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context/val.jsonl",
+    # calc_stats(load_dataset("json",
+    #                         data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context/train.jsonl",
     #                         split='train'),
-    #                         tokenizer,
-    #                         "val"
-    #                         )
+    #             tokenizer
+    #            )
+    generate_modified_data(load_dataset("json",
+                            data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context/val.jsonl",
+                            split='train'),
+                            tokenizer,
+                            "val"
+                            )
     # calc_stats_mod_method(load_dataset(
     #     "json",
     #     data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context-len/val.jsonl",
