@@ -66,8 +66,8 @@ def code_llama(file_path, model_path):
 
 if __name__=="__main__":
     # code_llama("/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/reinforcement-learning/test-data/test.jsonl","codellama/CodeLlama-7b-hf")
-    # code_t5("/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/reinforcement-learning/test-data/val.jsonl",
-    #         "/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output",
-    #         "./codet5_output")
-    args = torch.load("/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output/training_args.bin")
-    print(args)
+    code_t5("/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/reinforcement-learning/test-data/val.jsonl",
+            "/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output/code-t5-fine-tuned",
+            "./codet5_output")
+    # args = torch.load("/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output/training_args.bin")
+    # print(args)
