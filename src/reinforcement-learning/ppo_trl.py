@@ -60,7 +60,7 @@ model = AutoModelForSeq2SeqLMWithValueHead.from_pretrained(script_args.model_nam
 
 def preprocess_function(examples):
     inputs = examples["Input"]
-    targets = examples["Output"]    
+    targets = examples["Output"]
 
     padding = "max_length"
     # inputs = [prefix + inp for inp in inputs]
