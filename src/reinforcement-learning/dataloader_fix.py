@@ -18,10 +18,10 @@ def preprocess_function(examples):
     labels = tokenizer(text_target=targets, max_length=512, padding=padding, truncation=True, return_tensors="pt")
 
     # if padding == "max_length" and data_args.ignore_pad_token_for_loss:
-    if padding == "max_length":
-        labels["input_ids"] = [
-            [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in labels["input_ids"]
-        ]
+    # if padding == "max_length":
+    #     labels["input_ids"] = [
+    #         [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in labels["input_ids"]
+    #     ]
     
     # with open('ii.txt', 'a') as f:
     #     f.write("Sample One:\n")
@@ -55,8 +55,11 @@ train_dataloader = DataLoader(train_dataset, 4, False, collate_fn=DefaultDataCol
 for epoch, sample in enumerate(train_dataloader):
     print(sample.keys())
     print(sample['input_ids'].size())
-    print(sample['input'])
-    print(sample['output'])
+    sample['query'] = tokenizer.batch_decode(sample['input_ids'], skip_special_tokens=True)
+    sample['query_label'] = tokenizer.batch_decode(sample['labels'], skip_special_tokens=True)
+    print(len(sample['query']))
+    print(sample['query'][0])
+    print(sample['query_label'][0])
     # print(sample['Input'][0])
     # print(sample['Output'][0])
     # print(sample['input_ids'][0])
