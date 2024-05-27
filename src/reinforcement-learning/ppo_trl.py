@@ -14,12 +14,13 @@ from transformers import (
     RobertaForSequenceClassification,
     RobertaTokenizer,
     AutoModelForSeq2SeqLM,
-    DataCollatorForSeq2Seq
+    DataCollatorForSeq2Seq,
+    DefaultDataCollator
 )
 
 from trl import AutoModelForCausalLMWithValueHead, PPOConfig, PPOTrainer, AutoModelForSeq2SeqLMWithValueHead, create_reference_model, set_seed
 from trl.core import LengthSampler, respond_to_batch
-from reward_test import get_reward
+from reward_test import Reward
 
 tqdm.pandas()
 
@@ -58,6 +59,8 @@ eval_dataset = load_dataset("json",data_files=script_args.eval_data_file_path, s
 tokenizer = AutoTokenizer.from_pretrained(script_args.tokenizer_name)
 model = AutoModelForSeq2SeqLMWithValueHead.from_pretrained(script_args.model_name)
 
+print(next(model.parameters()).is_cuda)
+
 def preprocess_function(examples):
     inputs = examples["Input"]
     targets = examples["Output"]
@@ -75,6 +78,8 @@ def preprocess_function(examples):
         ]
 
     model_inputs["labels"] = labels["input_ids"]
+    model_inputs['input'] = inputs
+    model_inputs['output'] = targets
     return model_inputs
 
 train_dataset = train_dataset.map(
@@ -123,9 +128,6 @@ ppo_trainer = PPOTrainer(
     model,
     ref_model=ref_model,
     tokenizer=tokenizer,
-    # dataset=train_dataset,
-    # data_collator=data_collator,
-    # data_collator=custom_collator,
     optimizer=optimizer
 )
 
@@ -137,37 +139,50 @@ generation_kwargs = {
     "pad_token_id": tokenizer.eos_token_id,
     "max_new_tokens": 512
 }
-output_min_length = 450
+output_min_length = 512
 output_max_length = 512
 output_length_sampler = LengthSampler(output_min_length, output_max_length)
 
 model_save_path = script_args.model_save_path
 
-train_dataloader = DataLoader(train_dataset, 4, True)
+train_dataloader = DataLoader(train_dataset, script_args.batch_size, True, collate_fn=DefaultDataCollator())
 
+def postprocess_text(preds, labels):
+    preds = [pred.strip() for pred in preds]
+    labels = [[label.strip()] for label in labels]
+
+    return preds, labels
 # for epoch, batch in tqdm(enumerate(ppo_trainer.dataloader)):
 for epoch, batch in tqdm(enumerate(train_dataloader)):
-    print(len(batch["input_ids"]))
+    # print(len(batch["input_ids"]))
     query_tensors = batch["input_ids"]
-    print("========================GEN===========================")
+    query_tensors = query_tensors.to('cuda')
+    # print("========================GEN===========================")
     response_tensors = []
     for query in query_tensors:
-        gen_len = output_length_sampler()
+        # gen_len = output_length_sampler()
+        gen_len = 512
         generation_kwargs["max_new_tokens"] = gen_len
         response = ppo_trainer.generate(query, **generation_kwargs)
         response_tensors.append(response.squeeze()[-gen_len:])
+       
     batch["response_ids"] = response_tensors
+    
+    # print("========================GEN PPO===========================")
+    
     rewards = []
-
     for query, response in zip(query_tensors, response_tensors):
         smelly_code_sample = tokenizer.decode(query.squeeze(), skip_special_tokens=True)
         refactored_code = tokenizer.decode(response.squeeze(), skip_special_tokens=True)
-        reward = get_reward(smelly_code_sample, refactored_code)
+        reward = Reward().get_reward(smelly_code_sample, refactored_code)
         rewards.append(torch.tensor(reward))
 
     assert len(query_tensors) == len(response_tensors) == len(rewards)
 
-    print(type(query_tensors))
+    # print("Type of query tensors:",type(query_tensors))
+    # print("Shape of query tensors:", query_tensors.shape)
+
+    query_tensors = list(torch.unbind(query_tensors, dim=0)) # ppo_trainer.step only takes list of tensors
 
     # # Run PPO step
     stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
@@ -180,3 +195,12 @@ for epoch, batch in tqdm(enumerate(train_dataloader)):
 
 ppo_trainer.save_pretrained(model_save_path)
 print("End of program")
+
+"""
+python ppo_trl.py 
+--model_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output 
+--tokenizer_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output 
+--log_with wandb 
+--train_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context-len/train.jsonl 
+--eval_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context-len/val.jsonl
+"""
