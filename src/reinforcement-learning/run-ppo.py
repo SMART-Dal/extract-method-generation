@@ -2,14 +2,6 @@ import os
 import torch
 import numpy as np
 import datetime
-# from parser import DFG_python,DFG_java,DFG_ruby,DFG_go,DFG_php,DFG_javascript,DFG_csharp
-# from parser import (tree_to_token_index,
-#                    tree_to_token_nodes,
-#                    index_to_code_token,
-#                    tree_to_variable_index, 
-#                    detokenize_code)
-# from tree_sitter import Language, Parser
-# from reward import remove_special_tokens, tree_sitter_full_compile, get_reward
 from torch.utils.data import DataLoader, Dataset, SequentialSampler, RandomSampler,TensorDataset
 from model import CodeT5HeadWithValueModel, respond_to_batch
 from transformers import RobertaTokenizer
@@ -115,10 +107,7 @@ model_ref = CodeT5HeadWithValueModel()
 model_ref.load_base_model(args.load_model_path)
 model_ref.to(args.device)
 tokenizer = RobertaTokenizer.from_pretrained("Salesforce/codet5-base", do_lower_case=False)
-ppo_config = {
-     "batch_size": args.train_batch_size, 'eos_token_id': tokenizer.eos_token_id, 'lr':args.lr, "adap_kl_ctrl": True, 
-     'init_kl_coef':args.kl_coef,"target":args.kl_target, "vf_coef":args.vf_coef
-     }
+ppo_config = {"batch_size": args.train_batch_size, 'eos_token_id': tokenizer.eos_token_id, 'lr':args.lr, "adap_kl_ctrl": True, 'init_kl_coef':args.kl_coef,"target":args.kl_target, "vf_coef":args.vf_coef}
 ppo_trainer = PPOTrainer(model, model_ref, **ppo_config)
 
 #load features
