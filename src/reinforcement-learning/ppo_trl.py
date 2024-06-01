@@ -184,6 +184,9 @@ for epoch, batch in tqdm(enumerate(train_dataloader)):
 
     query_tensors = list(torch.unbind(query_tensors, dim=0)) # ppo_trainer.step only takes list of tensors
 
+    # print("Test:")
+    # print(tokenizer.decode(query_tensors[0].squeeze(), skip_special_tokens=True))
+
     # # Run PPO step
     stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
     ppo_trainer.log_stats(stats, batch, rewards, columns_to_log=["input_ids","response_ids"])
