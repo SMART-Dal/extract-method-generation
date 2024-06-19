@@ -2,8 +2,10 @@
 #SBATCH --mem=64G
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=8
-#SBATCH --time=24:0:0
+#SBATCH --time=7-1:0:0
 #SBATCH --signal=B:USR1@360
+#SBATCH --mail-user=indranil.palit@dal.ca
+#SBATCH --mail-type=ALL
 
 echo "Start"
 
