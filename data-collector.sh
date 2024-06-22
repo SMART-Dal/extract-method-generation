@@ -13,7 +13,7 @@ echo "Start"
 module purge
 module load python/3.10
 module load java/17
-module load maven/3.6.3
+module load maven/3.9.6
 
 # export JAVA_TOOL_OPTIONS="-Xms256m -Xmx5g"
 unset JAVA_TOOL_OPTIONS
