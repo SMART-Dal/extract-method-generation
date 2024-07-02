@@ -14,7 +14,7 @@ unset JAVA_TOOL_OPTIONS
 
 # python -m venv .venv
 
-# Make sure to run this in the job node (srun terminal in interactive)
+# Make sure to run this in the job node (salloc terminal in interactive)
 if [ -n "$SLURM_TMPDIR" ]; then
     if [ -d "$SLURM_TMPDIR/rl-template" ]; then
         echo "rl-template already exists in $SLURM_TMPDIR"
