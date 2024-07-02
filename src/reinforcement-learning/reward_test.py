@@ -37,6 +37,10 @@ class Reward:
         self.edit_file(smelly_code,"smelly code committed")
         self.edit_file(refactored_code, "refactored code committed")
         res = self.get_refactoring()
+        with open("./logs.txt","a+") as fp:
+            fp.write("\nGet refactoring output:\n")
+            fp.write(res)
+            fp.write("\n")
         if res.strip() == 'true':
             return 1.0
         else:

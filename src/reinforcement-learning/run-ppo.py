@@ -9,8 +9,8 @@ from ppo import PPOTrainer
 import torch
 from itertools import cycle
 from tqdm import tqdm
-from bleu import _bleu
-from utils import extract_structure, Example, read_examples, convert_examples_to_features, InputFeatures
+# from bleu import _bleu
+# from utils import extract_structure, Example, read_examples, convert_examples_to_features, InputFeatures
 import argparse
 
 
@@ -72,21 +72,21 @@ baseline_output_dir = args.baseline_output_path + '/'+l1+'-'+l2+'/'
 load_model_path = args.load_model_path
 output_dir = args.output_path + '/'+l1+'-'+l2+'/'
 
-dfg_function={
-    'python':DFG_python,
-    'java':DFG_java,
-    'php':DFG_php,
-    'javascript':DFG_javascript,
-    'c_sharp':DFG_csharp,
-    'c':DFG_csharp,
-    'cpp':DFG_csharp,}
-parsers={}        
-for lang in dfg_function:
-    LANGUAGE = Language('parser/my-languages.so', lang)
-    parser = Parser()
-    parser.set_language(LANGUAGE) 
-    parser = [parser,dfg_function[lang]]    
-    parsers[lang]= parser
+# dfg_function={
+#     'python':DFG_python,
+#     'java':DFG_java,
+#     'php':DFG_php,
+#     'javascript':DFG_javascript,
+#     'c_sharp':DFG_csharp,
+#     'c':DFG_csharp,
+#     'cpp':DFG_csharp,}
+# parsers={}        
+# for lang in dfg_function:
+#     LANGUAGE = Language('parser/my-languages.so', lang)
+#     parser = Parser()
+#     parser.set_language(LANGUAGE) 
+#     parser = [parser,dfg_function[lang]]    
+#     parsers[lang]= parser
 
 
 def get_dataset(features):

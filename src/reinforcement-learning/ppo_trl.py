@@ -169,13 +169,19 @@ for epoch, batch in tqdm(enumerate(train_dataloader)):
     batch["response_ids"] = response_tensors
     
     # print("========================GEN PPO===========================")
-    
-    rewards = []
-    for query, response in zip(query_tensors, response_tensors):
-        smelly_code_sample = tokenizer.decode(query.squeeze(), skip_special_tokens=True)
-        refactored_code = tokenizer.decode(response.squeeze(), skip_special_tokens=True)
-        reward = Reward().get_reward(smelly_code_sample, refactored_code)
-        rewards.append(torch.tensor(reward))
+    with open("./logs.txt", "a+") as f:
+        rewards = []
+        for query, response in zip(query_tensors, response_tensors):
+            smelly_code_sample = tokenizer.decode(query.squeeze(), skip_special_tokens=True)
+            refactored_code = tokenizer.decode(response.squeeze(), skip_special_tokens=True)
+            reward = Reward().get_reward(smelly_code_sample, refactored_code)
+            rewards.append(torch.tensor(reward))
+        
+            f.write("\nSmelly Code:"+"\n"+smelly_code_sample)
+            f.write("\nRefactored Code:"+"\n"+refactored_code)
+            f.write("\nReward:"+"\n"+str(reward))
+            
+        f.write("\n============End of batch================\n")
 
     assert len(query_tensors) == len(response_tensors) == len(rewards)
 
