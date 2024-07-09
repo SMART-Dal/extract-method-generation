@@ -44,8 +44,8 @@ with open("/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-g
         tok_input = tok_input.to('cuda')
         model = model.to('cuda')
         with torch.no_grad():
-            # gen_tokens = model.generate(tok_input, max_length = 512)
-            gen_tokens = model.generate(list(tok_input).unsqueeze(dim=0), max_length = 512)
+            gen_tokens = model.generate(tok_input, max_length = 512)
+            # gen_tokens = model.generate(list(tok_input).unsqueeze(dim=0), max_length = 512)
         ft = tokenizer.decode(gen_tokens[0], skip_special_tokens=True)
         print("Normal generation:")
         print(ft)
@@ -54,7 +54,8 @@ with open("/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-g
         gen_len = 512
         generation_kwargs["max_new_tokens"] = gen_len
         # Converting to list is a generic practice: 
-        response = ppo_trainer.generate(list(tok_input), **generation_kwargs)
+        # response = ppo_trainer.generate(list(tok_input), **generation_kwargs)
+        response = ppo_trainer.generate(list(tok_input), max_length = 512)
         ft_ppo = tokenizer.decode(response[0], skip_special_tokens=True)
         print(ft_ppo)
         break
