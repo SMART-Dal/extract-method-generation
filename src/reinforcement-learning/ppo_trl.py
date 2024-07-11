@@ -163,7 +163,8 @@ for epoch, batch in tqdm(enumerate(train_dataloader)):
         # gen_len = output_length_sampler()
         gen_len = 512
         generation_kwargs["max_new_tokens"] = gen_len
-        response = ppo_trainer.generate(query, **generation_kwargs)
+        # response = ppo_trainer.generate(query, **generation_kwargs)
+        response = ppo_trainer.generate(query, max_length = 512)
         response_tensors.append(response.squeeze()[-gen_len:])
        
     batch["response_ids"] = response_tensors
