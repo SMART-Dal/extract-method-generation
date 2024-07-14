@@ -185,3 +185,5 @@ src/reinforcement-learning/pre_trained_weights/*
 *.lock
 
 *output/
+
+*.txt
