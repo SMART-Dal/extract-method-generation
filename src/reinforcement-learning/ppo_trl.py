@@ -3,6 +3,7 @@ from typing import Optional
 
 import torch
 import json
+import datetime
 from torch.utils.data import Dataset, DataLoader
 from datasets import load_dataset
 from torch.optim import Adam
@@ -102,7 +103,7 @@ config = PPOConfig(
     mini_batch_size=script_args.mini_batch_size,
     batch_size=script_args.batch_size,
     gradient_accumulation_steps=script_args.gradient_accumulation_steps,
-    ratio_threshold=200,
+    # ratio_threshold=200,
     early_stopping=True
 )
 ref_model = create_reference_model(model)
@@ -170,7 +171,7 @@ for epoch, batch in tqdm(enumerate(train_dataloader)):
     batch["response_ids"] = response_tensors
     
     # print("========================GEN PPO===========================")
-    with open("./logs.txt", "a+") as f:
+    with open(f"./trl_intermediate_logs/logs_{str(datetime.datetime.now().date())}_{str(datetime.datetime.now().time())}.txt", "a+") as f:
         rewards = []
         for query, response in zip(query_tensors, response_tensors):
             smelly_code_sample = tokenizer.decode(query.squeeze(), skip_special_tokens=True)
