@@ -14,6 +14,8 @@ RUN_NAME={$1}
 OUTPUT_FOLDER=${2}
 MODEL_NAME=${3}
 TOKENIZER_NAME=${4}
+TRAIN_DATA_FILE_RELATIVE_PATH=${5}
+EVAL_DATA_FILE_RELATIVE_PATH=${6}
 
 cd $project_location
 
@@ -28,6 +30,6 @@ python supervised_fine_tune.py \
 --tokenizer_name $TOKENIZER_NAME \
 --model_save_path $OUTPUT_FOLDER \
 --run_name $RUN_NAME \
---train_data_file_path $project_location/data/dl-no-context-len/train.jsonl \
---eval_data_file_path $project_location/data/dl-no-context-len/val.jsonl \
+--train_data_file_path $project_location/$TRAIN_DATA_FILE_RELATIVE_PATH \
+--eval_data_file_path $project_location/$EVAL_DATA_FILE_RELATIVE_PATH \
 --num_epochs 5
