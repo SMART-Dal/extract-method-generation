@@ -117,13 +117,6 @@ data_collator = DataCollatorForSeq2Seq(
     # pad_to_multiple_of=8 if training_args.fp16 else None,
 )
 
-# def custom_collator(data):
-#     batch = {}
-#     for key in data[0].keys():
-#         # Collect elements as lists to preserve individual structure
-#         batch[key] = [sample[key] for sample in data]
-#     return batch
-
 ppo_trainer = PPOTrainer(
     config,
     model,
@@ -134,9 +127,9 @@ ppo_trainer = PPOTrainer(
 
 generation_kwargs = {
     "min_length": -1,
-    "top_k": 0.0,
-    "top_p": 1.0,
-    "do_sample": True,
+    # "top_k": 0.0,
+    # "top_p": 1.0,
+    # "do_sample": True,
     "pad_token_id": tokenizer.eos_token_id,
     "max_new_tokens": 512
 }
@@ -163,9 +156,9 @@ for epoch, batch in tqdm(enumerate(train_dataloader)):
     for query in query_tensors:
         # gen_len = output_length_sampler()
         gen_len = 512
-        generation_kwargs["max_new_tokens"] = gen_len
-        # response = ppo_trainer.generate(query, **generation_kwargs)
-        response = ppo_trainer.generate(query, max_length = 512)
+        # generation_kwargs["max_new_tokens"] = gen_len
+        response = ppo_trainer.generate(query, **generation_kwargs)
+        # response = ppo_trainer.generate(query, max_length = 512)
         response_tensors.append(response.squeeze()[-gen_len:])
        
     batch["response_ids"] = response_tensors
@@ -209,9 +202,18 @@ print("End of program")
 
 """
 python ppo_trl.py 
---model_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output 
---tokenizer_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output 
+--model_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output/code-t5-fine-tuned 
+--tokenizer_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output/code-t5-fine-tuned 
 --log_with wandb 
 --train_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context-len/train.jsonl 
 --eval_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context-len/val.jsonl
+"""
+
+"""
+python ppo_trl.py 
+--model_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output/code-t5-fine-tuned 
+--tokenizer_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output/code-t5-fine-tuned 
+--log_with wandb 
+--train_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-large/preprocessed/train.jsonl 
+--eval_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-large/preprocessed/val.jsonl 
 """

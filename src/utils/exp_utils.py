@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 def generate_modified_data(dataset, tokenizer, file_name):
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    output_dir = os.path.join(project_root, "data", "dl-no-context-len")
+    output_dir = os.path.join(project_root, "data", "dl-large", "preprocessed")
     os.makedirs(output_dir, exist_ok=True)
     with open(os.path.join(output_dir, f'{file_name}.jsonl'), 'w') as f:
         for data in tqdm(dataset):
@@ -123,7 +123,7 @@ if __name__=="__main__":
         # tokenizer)        
     elif type == "generate":
         generate_modified_data(load_dataset("json",
-                                data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context/val.jsonl",
+                                data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-large/preprocessed/val_raw.jsonl",
                                 split='train'),
                                 tokenizer,
                                 "val"
