@@ -33,19 +33,40 @@ class Reward:
             file_content =  f.write(new_class)
         self.commit_repo(commit_msg)
 
+    def get_compiler_signal(self):
+
+        process = subprocess.Popen(
+            ['javac', f'{self.template_root}/rl-template/src/main/java/Template.java'],
+            stdout=subprocess.PIPE,  # Capture the standard output
+            stderr=subprocess.PIPE   # Capture the standard error
+        )
+        stdout, stderr = process.communicate()
+
+        if process.returncode != 0:
+            print(stderr.decode())
+            return False
+        return True
+
+
+
     def get_reward(self, smelly_code, refactored_code):
+        reward = 0.0
         self.edit_file(smelly_code,"smelly code committed")
+        assert self.get_compiler_signal() == True
         self.edit_file(refactored_code, "refactored code committed")
+        if not self.get_compiler_signal():
+            return reward
+        reward+=1
         res = self.get_refactoring()
         with open("./logs.txt","a+") as fp:
             fp.write("\nGet refactoring output:\n")
             fp.write(res)
             fp.write("\n")
         if res.strip() == 'true':
-            return 1.0
-        else:
-            return 0.0
+            reward+=1
+        
+        return reward
 
 if __name__=="__main__":
-    Reward().get_reward("public void sleep(){\nint s1 = 1;\nint s2 = 2;\nint s3 = 3;\nint s4 = 4;\nint s5 = 5;\nint s6 = 6;\nint s7 = 7;\nint s8 = 8;\n}",
-               "public void sleep(){\nint s1 = 1;\nint s2 = 2;\nsleepNight();\nint s8 = 8;\n}\nprivate void sleepNight() {\nint s3 = 3;\nint s4 = 4;\nint s5 = 5;\nint s6 = 6;\nint s7 = 7;\n}")   
+    print(Reward().get_reward("public void sleep(){\nint s1 = 1;\nint s2 = 2;\nint s3 = 3;\nint s4 = 4;\nint s5 = 5;\nint s6 = 6;\nint s7 = 7;\nint s8 = 8;\n}",
+               "public void sleep(){\nint s1 = 1;\nint s2 = 2;\nsleepNight();\nint s8 = 8;\n}\nprivate void sleepNight() {\nint s3 = 3;\nint s4 = 4;\nint s5 = 5;\nint s6 = 6;\nint s7 = 7;\n}")   )
