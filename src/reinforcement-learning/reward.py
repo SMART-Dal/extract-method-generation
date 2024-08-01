@@ -1,138 +1,109 @@
-import numpy as np
-from tree_sitter import Language, Parser
-import re
-import torch
-from code_prepro.lang_processors import *
-from compiler.terminal_compiler import TerminalCompiler
+import subprocess
 import sys
-from parser import DFG_python,DFG_java,DFG_ruby,DFG_go,DFG_php,DFG_javascript,DFG_csharp
-sys.path.insert(0, '/home/grads/parshinshojaee/trl_code/trl_code/rl_code_repo/CodeBLEU/')
-from calc_code_bleu import calc_code_bleu
+import os
+import tree_sitter_java as tsjava
+from git import Repo
+from tree_sitter import Parser, Language
+class Reward:
+
+    def __init__(self) -> None:
+        self.template_root = os.environ['SLURM_TMPDIR']
 
 
+    def get_refactoring(self):
+        process = subprocess.Popen(['java', '-jar', 
+                                    '/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/rl-reward/target/rl-reward-1.0-SNAPSHOT-jar-with-dependencies.jar',
+                                    f'{self.template_root}/rl-template'], 
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output, error = process.communicate()
+        lines = output.decode().splitlines()
+        print(lines)
+        last_line = lines[-1] if lines else None
+        return last_line
 
+    def commit_repo(self,commit_msg):
+        repo_path = f'{self.template_root}/rl-template/'
+        repo = Repo(repo_path)
+        repo.index.add('src/main/java/Template.java')
+        repo.index.commit(commit_msg)
 
+    def edit_file(self, code, commit_msg):
 
-code_tokenizers = {"java": java_tokenizer, "cpp": cpp_tokenizer, "c": c_tokenizer, "python": py_tokenizer,
-                   "javascript": js_tokenizer, "php": php_tokenizer, "c_sharp": cs_tokenizer}
-code_detokenizers = {"java": java_detokenizer, "cpp": cpp_detokenizer, "c": c_detokenizer, "python": py_detokenizer,
-                   "javascript": js_detokenizer, "php": php_detokenizer, "c_sharp": cs_detokenizer}
-
-lang2compiler = {
-    "python": TerminalCompiler("Python"),
-    "java": TerminalCompiler("Java"),
-    "cpp": TerminalCompiler("C++"),
-    "c_sharp": TerminalCompiler("C#"),
-    "c": TerminalCompiler("C"),
-    "php": TerminalCompiler("PHP"),
-}
-
-dfg_function={
-    'python':DFG_python,
-    'java':DFG_java,
-    'php':DFG_php,
-    'javascript':DFG_javascript,
-    'c_sharp':DFG_csharp,
-    'c':DFG_csharp,
-    'cpp':DFG_csharp,}
-parsers={}        
-for lang in dfg_function:
-    LANGUAGE = Language('parser/my-languages.so', lang)
-    parser = Parser()
-    parser.set_language(LANGUAGE)   
-    parsers[lang]= parser
-    
-def remove_special_tokens(code_string):
-    lines = code_string.split("NEW_LINE")
-    lines = [item.strip() for item in lines]
-    
-    curr_indent = 0
-    new_lines = []
-    for line in lines:
-        indent_count = line.count('INDENT')
-        dedent_count = line.count('DEDENT')
-        curr_indent += indent_count - dedent_count
-        wo_indent = re.sub('INDENT\s?', '', line)
-        wo_dedent = re.sub('DEDENT\s?', '', wo_indent)
-        new_lines.append('\t'*curr_indent + wo_dedent)
-    return ("\n").join(new_lines)
-
-def dfs_parse_tree(node, level, count_list, verbose = False):
-    if verbose:
-        if node.type == 'ERROR':
-            print (level, '-'*(level*2), colored(node.type, 'red'))
-        else:
-            print (level, '-'*(level*2), node.type)
-    if node.type == 'ERROR':
-        count_list[0]+=1
-    else:
-        count_list[1]+=1
-    for child in node.children:
-        dfs_parse_tree(child, level+1, count_list, verbose)
-    return
-
-def tree_sitter_full_compile(code, lang='python', verbose = False):
-    root=parsers[lang].parse(bytes(code, 'utf-8')).root_node
-    count_list = [0, 0]
-    dfs_parse_tree(root, 0, count_list, verbose)
-    return count_list
-
-
-def get_reward(lang, code_ids=None,code_ref_ids=None,gold_ids=None, tokenizer=None):
-    code_ids = np.array(code_ids.cpu())
-    eos_positions = []
-    max_len = code_ids.shape[1]
-    for id in code_ids:
-        if tokenizer.eos_token_id in id:
-            eos_positions.append((id==tokenizer.eos_token_id).argmax())
-        else:
-            eos_positions.append(max_len)
-
-    codes = [tokenizer.decode(id[:eos_pos], skip_special_tokens=True, clean_up_tokenization_spaces=False) \
-             for id,eos_pos in zip(code_ids, eos_positions)]
-    codes_ref = [tokenizer.decode(id[:eos_pos], skip_special_tokens=True, clean_up_tokenization_spaces=False) \
-             for id,eos_pos in zip(code_ref_ids, eos_positions)] 
-    codes_gold = [tokenizer.decode(id[:eos_pos], skip_special_tokens=True, clean_up_tokenization_spaces=False) \
-             for id,eos_pos in zip(gold_ids, eos_positions)] 
+        new_class = "public class Template {\n" + code + "\n}"
         
-    codes = [code_detokenizers[lang](code) for code in codes]
-    
-    compilation = [lang2compiler[lang].compile_code_string(code) for code in codes]
+        with open(f'{self.template_root}/rl-template/src/main/java/Template.java', "w") as f:
+            file_content =  f.write(new_class)
+        self.commit_repo(commit_msg)
 
-    codes = [remove_special_tokens(code) for code in codes]
-    codes_ref = [remove_special_tokens(code) for code in codes_ref]
-    codes_gold = [remove_special_tokens(code) for code in codes_gold]
-    error_node_counts = [tree_sitter_full_compile(code,lang) for code in codes]
-    error_node_counts_ref = [tree_sitter_full_compile(code,lang) for code in codes_ref]
-    error_node_counts_gold = [tree_sitter_full_compile(code,lang) for code in codes_gold]
-    num_errors = [i[0] for i in error_node_counts]
-    num_errors_ref = [i[0] for i in error_node_counts_ref]  
-    num_errors_gold = [i[0] for i in error_node_counts_gold]  
-    num_nodes = [i[1] for i in error_node_counts]
-    num_nodes_ref = [i[1] for i in error_node_counts_ref]
-    num_nodes_gold = [i[1] for i in error_node_counts_gold]
-    
-    keywords_dir = 'CodeBLEU/keywords/'
-    # ast_match = calc_code_bleu([codes_gold], codes, lang, keywords_dir)[2]
-    # dfg_match = calc_code_bleu([codes_gold], codes, lang, keywords_dir)[3]
-    
-    rewards = np.zeros_like(code_ids, dtype=np.float)
-    ast_match_batch = 0
-    dfg_match_batch = 0
-    compile_batch = 0
-    for i in range(len(rewards)):
-        _, _, did_compile = compilation[i]
-        reward = 1 if did_compile else -1
-        
-        ast_match = calc_code_bleu([[codes_gold[i]]], [codes[i]], lang, keywords_dir)[2]
-        dfg_match = calc_code_bleu([[codes_gold[i]]], [codes[i]], lang, keywords_dir)[3]
+    def get_compiler_signal(self):
 
-        rewards[i, min(eos_positions[i],max_len-1)] = reward + ast_match + dfg_match
-        compile_batch += reward
-        ast_match_batch += ast_match
-        dfg_match_batch += dfg_match
-     
-    mean_rate = compile_batch/len(codes)
-    mean_ast_match =  ast_match_batch/len(codes) 
-    mean_dfg_match =  dfg_match_batch/len(codes)  
-    return torch.Tensor(rewards),mean_rate,mean_ast_match,mean_dfg_match, num_errors, num_errors_ref, num_nodes, num_nodes_ref
+        process = subprocess.Popen(
+            ['javac', f'{self.template_root}/rl-template/src/main/java/Template.java'],
+            stdout=subprocess.PIPE,  # Capture the standard output
+            stderr=subprocess.PIPE   # Capture the standard error
+        )
+        stdout, stderr = process.communicate()
+
+        print(stderr)
+
+        if process.returncode != 0:
+            return False
+        return True
+
+    def validate_syntactic_structure(self):
+        JAVA_LANGUAGE = Language(tsjava.language())
+        parser = Parser(JAVA_LANGUAGE)
+
+        with open(f'{self.template_root}/rl-template/src/main/java/Template.java', 'r') as f:
+            file_content = f.read()
+
+        tree = parser.parse(bytes(file_content, "utf8"))
+
+        root_node = tree.root_node
+        # print("True" if "ERROR" in root_node else "False")
+        # print(True if "(ERROR" or "(MISSING" in str(root_node) else False)
+        if "(ERROR" in str(root_node) or "(MISSING" in str(root_node):
+            return False
+        return True
+        # def check_for_errors(node):
+        #     print(node.type)
+        #     if node.type in ["ERROR", "MISSING"]:
+        #         return True
+        #     for child in node.children:
+        #         if check_for_errors(child):
+        #             return True
+        #     return False
+
+        # if check_for_errors(root_node):
+        #     print("Caught")
+        #     return False
+        # else:
+        #     return True        
+
+
+    def get_reward(self, smelly_code, refactored_code):
+        reward = 0.0
+        self.edit_file(smelly_code,"smelly code committed")
+        # assert self.get_compiler_signal() == True
+        self.edit_file(refactored_code, "refactored code committed")
+
+        # Although we should return if syntactic structure isn't correct, but I am keeping the logic just to be extra sure.
+        if self.validate_syntactic_structure():
+            reward+=1.0
+        print(reward)
+        if self.get_compiler_signal():
+            reward+=1.0
+        print(reward)
+        res = self.get_refactoring()
+        # with open("./logs.txt","a+") as fp:
+        #     fp.write("\nGet refactoring output:\n")
+        #     fp.write(res)
+        #     fp.write("\n")
+        if res.strip() == 'true':
+            reward+=1.0
+        print(reward)
+        return reward
+
+if __name__=="__main__":
+    print(Reward().get_reward("public void sleep(){\nint s1 = 1;\nint s2 = 2;\nint s3 = 3;\nint s4 = 4;\nint s5 = 5;\nint s6 = 6;\nint s7 = 7;\nint s8 = 8;\n}",
+               "public void sleep(){\nint s1 = 1;\nint s2 = 2;\nsleepNight();\nint s8 = 8;\n}\nprivate void sleepNight( {\nint s3 = 3;\nint s4 = 4;\nint s5 = 5;\nint s6 = 6;\nint s7 = 7;\n}")   )
