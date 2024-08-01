@@ -2,7 +2,7 @@
 #SBATCH --mem=64G
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=8
-#SBATCH --time=6:0:0
+#SBATCH --time=8:0:0
 #SBATCH --gres=gpu:v100l:1
 #SBATCH --signal=B:USR1@360
 #SBATCH --mail-user=indranil.palit@dal.ca
@@ -16,6 +16,7 @@ MODEL_NAME=${3}
 TOKENIZER_NAME=${4}
 TRAIN_DATA_FILE_RELATIVE_PATH=${5}
 EVAL_DATA_FILE_RELATIVE_PATH=${6}
+NUMBER_OF_EPOCHS=${7}
 
 cd $project_location
 
@@ -32,4 +33,6 @@ python supervised_fine_tune.py \
 --run_name $RUN_NAME \
 --train_data_file_path $project_location/$TRAIN_DATA_FILE_RELATIVE_PATH \
 --eval_data_file_path $project_location/$EVAL_DATA_FILE_RELATIVE_PATH \
---num_epochs 5
+--num_epochs $NUMBER_OF_EPOCHS
+
+# sbatch fine-tune.sh code-t5-19k-15 ./output/code-t5-19k-15 Salesforce/codet5-small Salesforce/codet5-small data/dl-large/preprocessed/train.jsonl data/dl-large/preprocessed/val.jsonl 15

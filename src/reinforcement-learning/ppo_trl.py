@@ -21,7 +21,7 @@ from transformers import (
 
 from trl import AutoModelForCausalLMWithValueHead, PPOConfig, PPOTrainer, AutoModelForSeq2SeqLMWithValueHead, create_reference_model, set_seed
 from trl.core import LengthSampler, respond_to_batch
-from reward_test import Reward
+from reward import Reward
 
 tqdm.pandas()
 
@@ -147,6 +147,8 @@ def postprocess_text(preds, labels):
 
     return preds, labels
 # for epoch, batch in tqdm(enumerate(ppo_trainer.dataloader)):
+
+intermediate_log_file = f"./trl_intermediate_logs/logs_{str(datetime.datetime.now().date())}_{str(datetime.datetime.now().time())}.txt"
 for epoch, batch in tqdm(enumerate(train_dataloader)):
     # print(len(batch["input_ids"]))
     query_tensors = batch["input_ids"]
@@ -164,7 +166,7 @@ for epoch, batch in tqdm(enumerate(train_dataloader)):
     batch["response_ids"] = response_tensors
     
     # print("========================GEN PPO===========================")
-    with open(f"./trl_intermediate_logs/logs_{str(datetime.datetime.now().date())}_{str(datetime.datetime.now().time())}.txt", "a+") as f:
+    with open(intermediate_log_file, "a+") as f:
         rewards = []
         for query, response in zip(query_tensors, response_tensors):
             smelly_code_sample = tokenizer.decode(query.squeeze(), skip_special_tokens=True)
