@@ -187,3 +187,5 @@ src/reinforcement-learning/pre_trained_weights/*
 *output/
 
 *.txt
+
+*.arrow

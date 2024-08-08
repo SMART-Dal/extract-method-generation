@@ -15,6 +15,7 @@ from transformers import (
 from dataclasses import dataclass, field
 from typing import Optional
 from transformers import EarlyStoppingCallback
+from codebleu import calc_codebleu
 
 os.environ["WANDB_PROJECT"]="extract_method_refactoring_generation"
 
@@ -135,12 +136,15 @@ def compute_metrics(eval_preds):
     # Some simple post-processing
     decoded_preds, decoded_labels = postprocess_text(decoded_preds, decoded_labels)
 
+    # Code Bleu
+    code_blue_result = calc_codebleu(decoded_labels, decoded_preds, lang="java", weights=(0.25, 0.25, 0.25, 0.25), tokenizer=None)
+
     result_bleu = metric1.compute(predictions=decoded_preds, references=decoded_labels)
     result_bleu = {"bleu": result_bleu["score"]}
 
     result_rouge = metric2.compute(predictions=decoded_preds, references=decoded_labels)
 
-    result = {**result_bleu, **result_rouge}
+    result = {**result_bleu, **result_rouge, **code_blue_result}
 
     prediction_lens = [np.count_nonzero(pred != tokenizer.pad_token_id) for pred in preds]
     result["gen_len"] = np.mean(prediction_lens)
