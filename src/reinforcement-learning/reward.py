@@ -17,7 +17,6 @@ class Reward:
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output, error = process.communicate()
         lines = output.decode().splitlines()
-        print(lines)
         last_line = lines[-1] if lines else None
         return last_line
 
@@ -90,10 +89,8 @@ class Reward:
         # Although we should return if syntactic structure isn't correct, but I am keeping the logic just to be extra sure.
         if self.validate_syntactic_structure():
             reward+=1.0
-        print(reward)
         if self.get_compiler_signal():
             reward+=1.0
-        print(reward)
         res = self.get_refactoring()
         # with open("./logs.txt","a+") as fp:
         #     fp.write("\nGet refactoring output:\n")
@@ -101,7 +98,6 @@ class Reward:
         #     fp.write("\n")
         if res.strip() == 'true':
             reward+=1.0
-        print(reward)
         return reward
 
 if __name__=="__main__":

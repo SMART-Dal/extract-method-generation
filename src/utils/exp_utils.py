@@ -6,9 +6,20 @@ from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from tqdm import tqdm
 
-def generate_modified_data(dataset, tokenizer, file_name):
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    output_dir = os.path.join(project_root, "data", "dl-large", "preprocessed")
+def merge_files(file1, file2, file3, output_file):
+
+    # Open the output file in write mode
+    with open(output_file, 'w') as outfile:
+        # Iterate through each input file
+        for filename in [file1, file2, file3]:
+            with open(filename, 'r') as infile:
+                for line in infile:
+                    # Write each line to the output file
+                    outfile.write(line)
+
+def generate_modified_data(dataset, tokenizer, file_name, output_dir):
+    # project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    # output_dir = os.path.join(project_root, "data", "dl-large", "preprocessed", "len")
     os.makedirs(output_dir, exist_ok=True)
     with open(os.path.join(output_dir, f'{file_name}.jsonl'), 'w') as f:
         for data in tqdm(dataset):
@@ -27,10 +38,15 @@ def calc_stats(examples, tokenizer=None, collation=False):
     avg_trg_len_tokenize = []
     avg_trg_collated_len_tokenize = []
     src_count, trg_count, trg_col_count = 0,0,0
+
+    print(type(collation))
+    print(collation)
+
     if collation:
         keys = ("Smelly Sample", "Method after Refactoring", 'Extracted Method')
     else:
         keys = ("Input", "Output")   
+
     for ex in tqdm(examples):
 
         avg_src_len.append(len(str(ex[keys[0]]).split()))
@@ -107,13 +123,16 @@ def calc_stats_mod_method(examples, tokenizer=None):
 if __name__=="__main__":
     tokenizer = AutoTokenizer.from_pretrained("Salesforce/codet5-small")
     # # model = AutoModelForSeq2SeqLM.from_pretrained("Salesforce/codet5-small")
-    type = sys.argv[1]
-    if type == "calc":
+    choice_type = sys.argv[1]
+    if choice_type == "calc":
         data_files = sys.argv[2]
+        colln = sys.argv[3]
+        
         calc_stats(load_dataset("json",
                                 data_files=data_files,
                                 split='train'),
-                    tokenizer
+                    tokenizer,
+                    collation=(colln=="True")
                 )
         # calc_stats_mod_method(load_dataset(
         #     "json",
@@ -121,13 +140,22 @@ if __name__=="__main__":
         #     split="train",
         # ),
         # tokenizer)        
-    elif type == "generate":
+    elif choice_type == "generate":
+        input_file = sys.argv[2]
+        output_folder = sys.argv[3]
         generate_modified_data(load_dataset("json",
-                                data_files="/home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-large/preprocessed/val_raw.jsonl",
-                                split='train'),
+                                data_files=input_file,
+                                split="train"),
                                 tokenizer,
-                                "val"
+                                input_file.split("/")[-1].split(".")[0],
+                                output_dir=output_folder
                                 )
+    elif choice_type == "merge":
+        file1 = sys.argv[2]
+        file2 = sys.argv[3]
+        file3 = sys.argv[4]
+        output_filepath = sys.argv[5]
+        merge_files(file1, file2, file3, output_filepath)
     else:
         print("Wrong Choice")        
 

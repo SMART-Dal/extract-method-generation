@@ -2,8 +2,11 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 import torch
+import evaluate
+import numpy as np
 import json
 import datetime
+import wandb
 from torch.utils.data import Dataset, DataLoader
 from datasets import load_dataset
 from torch.optim import Adam
@@ -22,6 +25,7 @@ from transformers import (
 from trl import AutoModelForCausalLMWithValueHead, PPOConfig, PPOTrainer, AutoModelForSeq2SeqLMWithValueHead, create_reference_model, set_seed
 from trl.core import LengthSampler, respond_to_batch
 from reward import Reward
+from codebleu import calc_codebleu
 
 tqdm.pandas()
 
@@ -60,7 +64,7 @@ eval_dataset = load_dataset("json",data_files=script_args.eval_data_file_path, s
 tokenizer = AutoTokenizer.from_pretrained(script_args.tokenizer_name)
 model = AutoModelForSeq2SeqLMWithValueHead.from_pretrained(script_args.model_name)
 
-print(next(model.parameters()).is_cuda)
+# print(next(model.parameters()).is_cuda)
 
 def preprocess_function(examples):
     inputs = examples["Input"]
@@ -68,9 +72,9 @@ def preprocess_function(examples):
 
     padding = "max_length"
     # inputs = [prefix + inp for inp in inputs]
-    model_inputs = tokenizer(inputs, max_length=512, padding=padding, truncation=True, return_tensors="pt")
+    model_inputs = tokenizer(inputs, max_length=512, padding=padding, truncation=True, return_tensors="pt").to('cuda')
     # Tokenize targets with the `text_target` keyword argument
-    labels = tokenizer(text_target=targets, max_length=512, padding=padding, truncation=True, return_tensors="pt")
+    labels = tokenizer(text_target=targets, max_length=512, padding=padding, truncation=True, return_tensors="pt").to('cuda')
 
     # if padding == "max_length" and data_args.ignore_pad_token_for_loss:
     if padding == "max_length":
@@ -148,10 +152,59 @@ def postprocess_text(preds, labels):
     return preds, labels
 # for epoch, batch in tqdm(enumerate(ppo_trainer.dataloader)):
 
+metric1 = evaluate.load("sacrebleu", cache_dir="./cache_dir")
+metric2 = evaluate.load("rouge")
+
+def compute_metrics(eval_preds):
+    preds, labels = eval_preds
+
+    # Move each tensor in preds and labels to CPU and convert to numpy arrays
+    preds = [pred.cpu().numpy() if isinstance(pred, torch.Tensor) else pred for pred in preds]
+    labels = [label.cpu().numpy() if isinstance(label, torch.Tensor) else label for label in labels]
+
+    if isinstance(preds, tuple):
+        preds = preds[0]
+
+    # Replace -100s used for padding in each sequence individually
+    preds = [np.where(pred != -100, pred, tokenizer.pad_token_id) for pred in preds]
+    labels = [np.where(label != -100, label, tokenizer.pad_token_id) for label in labels]
+
+    # Decode predictions and labels
+    decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=True)
+    decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
+
+    # Some simple post-processing
+    decoded_preds, decoded_labels = postprocess_text(decoded_preds, decoded_labels)
+
+    # Compute CodeBleu
+    code_bleu_result = calc_codebleu(decoded_labels, decoded_preds, lang="java", weights=(0.25, 0.25, 0.25, 0.25), tokenizer=None)
+
+    # Compute BLEU and ROUGE scores
+    result_bleu = metric1.compute(predictions=decoded_preds, references=decoded_labels)
+    result_bleu = {"bleu": result_bleu["score"]}
+
+    result_rouge = metric2.compute(predictions=decoded_preds, references=decoded_labels)
+
+    result = {**result_bleu, **result_rouge, **code_bleu_result}
+
+    # Calculate prediction lengths
+    prediction_lens = [np.count_nonzero(pred != tokenizer.pad_token_id) for pred in preds]
+    result["gen_len"] = np.mean(prediction_lens)
+    result = {k: round(v, 4) for k, v in result.items()}
+
+    # Log results to WandB
+    if wandb.run:
+        wandb.log(result)
+
+    return result
+
+
+
+
 intermediate_log_file = f"./trl_intermediate_logs/logs_{str(datetime.datetime.now().date())}_{str(datetime.datetime.now().time())}.txt"
 for epoch, batch in tqdm(enumerate(train_dataloader)):
     # print(len(batch["input_ids"]))
-    query_tensors = batch["input_ids"]
+    query_tensors = batch["input_ids"].to('cuda')
     query_tensors = query_tensors.to('cuda')
     # print("========================GEN===========================")
     response_tensors = []
@@ -161,9 +214,9 @@ for epoch, batch in tqdm(enumerate(train_dataloader)):
         # generation_kwargs["max_new_tokens"] = gen_len
         response = ppo_trainer.generate(query, **generation_kwargs)
         # response = ppo_trainer.generate(query, max_length = 512)
-        response_tensors.append(response.squeeze()[-gen_len:])
+        response_tensors.append(response.squeeze()[-gen_len:].to('cuda'))
        
-    batch["response_ids"] = response_tensors
+    batch["response_ids"] = [resp.to('cuda') for resp in response_tensors]
     
     # print("========================GEN PPO===========================")
     with open(intermediate_log_file, "a+") as f:
@@ -192,6 +245,22 @@ for epoch, batch in tqdm(enumerate(train_dataloader)):
 
     # # Run PPO step
     stats = ppo_trainer.step(query_tensors, response_tensors, rewards)
+
+    if epoch % 1 == 0:
+        eval_preds = (response_tensors, query_tensors)
+        metrics = compute_metrics(eval_preds)    
+
+    # # Monitor KL-Divergence
+    # kl_divergence = stats['kl_divergence']
+    # # print(f"Epoch: {epoch}, KL-Divergence: {kl_divergence}")
+
+    # if kl_divergence < 0:
+    #     print(f"Negative KL-Divergence detected at epoch {epoch}. Stopping training.")
+    #     break
+
+    print(stats)
+
+
     ppo_trainer.log_stats(stats, batch, rewards, columns_to_log=["input_ids","response_ids"])
 
     # Save model every 100 epochs
@@ -212,10 +281,21 @@ python ppo_trl.py
 """
 
 """
-python ppo_trl.py 
---model_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output/code-t5-fine-tuned 
---tokenizer_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output/code-t5-fine-tuned 
+python ppo_trl.py
+--model_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output/code-t5-19k-10
+--tokenizer_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output/code-t5-19k-10
+--model_save_path ./ppo-output-test
 --log_with wandb 
 --train_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-large/preprocessed/train.jsonl 
 --eval_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-large/preprocessed/val.jsonl 
+"""
+
+"""
+python ppo_trl.py
+--model_name Salesforce/codet5-small
+--tokenizer_name Salesforce/codet5-small
+--model_save_path ./ppo-output-test
+--log_with wandb 
+--train_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-large/preprocessed/len/test.jsonl 
+--eval_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-large/preprocessed/len/val.jsonl 
 """

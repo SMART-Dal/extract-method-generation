@@ -5,8 +5,7 @@ import os
 from datasets import load_dataset
 from transformers import (
     AutoTokenizer, 
-    AutoModelForSeq2SeqLM, 
-    AutoModelForCausalLM,
+    AutoModelForCausalLM, 
     DataCollatorForSeq2Seq, 
     Seq2SeqTrainer,
     Seq2SeqTrainingArguments,
@@ -26,8 +25,8 @@ class ScriptArguments:
     The config class
     """
 
-    model_name: Optional[str] = field(default="Salesforce/codet5-small", metadata={"help": "the model name or path"})
-    tokenizer_name: Optional[str] = field(default="Salesforce/codet5-small", metadata={"help": "the model name or path"})
+    model_name: Optional[str] = field(default="microsoft/CodeGPT-small-java-adaptedGPT2", metadata={"help": "the model name or path"})
+    tokenizer_name: Optional[str] = field(default="microsoft/CodeGPT-small-java-adaptedGPT2", metadata={"help": "the model name or path"})
     log_with: Optional[str] = field(default=None, metadata={"help": "use 'wandb' to log with wandb"})
     learning_rate: Optional[float] = field(default=(1.47e-5) * 2, metadata={"help": "the learning rate"})
     batch_size: Optional[int] = field(default=8, metadata={"help": "the batch size"})
@@ -43,7 +42,6 @@ class ScriptArguments:
     eval_data_file_path: Optional[str] = field(default=None,metadata={"help":"the path to the eval data file"})
     test_data_file_path: Optional[str] = field(default=None,metadata={"help":"the path to the eval data file"})
     num_epochs: Optional[int] = field(default=3,metadata={"help":"number of training epochs"})
-    architecture: Optional[str] = field(default="enc-dec",metadata={"help":"enc-dec or dec"})
 
 
 parser = HfArgumentParser(ScriptArguments)
@@ -57,11 +55,7 @@ eval_dataset = load_dataset("json",data_files=script_args.eval_data_file_path, s
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 tokenizer = AutoTokenizer.from_pretrained(script_args.model_name)
-
-if script_args.architecture == "dec":
-    model = AutoModelForCausalLM.from_pretrained(script_args.model_name)
-else:
-    model = AutoModelForSeq2SeqLM.from_pretrained(script_args.model_name)
+model = AutoModelForCausalLM.from_pretrained(script_args.model_name)
 
 def preprocess_function(examples):
     # for e in examples:
