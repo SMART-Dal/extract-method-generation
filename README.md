@@ -1,6 +1,6 @@
 # Extract Method Generation using Deep Reinforcement Learning
 
-## Compute Canada Setup
+## HPC Setup
 
 ### Basic Setup
 
@@ -29,7 +29,7 @@ If you want to collect data, follow the following steps:
 
 - Download the `json` from [SEART](https://seart-ghs.si.usi.ch/) tool. 
 - Place the `json` file in the input folder (data/input)
-- Execute the `data-collector.sh` script like `source data-collector.sh` or if using ComputeCanada just use `sbatch data-collector.sh`.
+- Execute the `data-collector.sh` script like `source data-collector.sh` or if using HPC just use `sbatch data-collector.sh`.
 - Alternatively, if you want to run the data collection script independently, execute the following:
 ```sh
 python -u src/dataprocessing/data.py $input_file_name
@@ -38,7 +38,7 @@ python -u src/dataprocessing/data.py $input_file_name
 ### Data Pre Processing
 
 - After running the data pre processing stage, it'll create a `jsonl` file with the before and after refactoring methods **for each repository**. 
-- If running via ComputeCanada, the output will be a `zip` file present in the `data/output` foler. Extract it and the `jsonl` files will be in the `localstorage` folder.
+- If running via HPC, the output will be a `zip` file present in the `data/output` foler. Extract it and the `jsonl` files will be in the `localstorage` folder.
 - Just execute the `src/deep_learning/dataset_creation.py` script like following.
 
 First, we need to collate all the data from different repository `jsonl` files to a single `jsonl` file.
@@ -69,7 +69,7 @@ python code-t5.py --model_save_path ./output/codet5-test --run_name code_t5_test
 
 Note: Make sure to setup `WandB` in the environment variable if you want to use W&B.
 
-- If you want to run a batch job using ComputeCanada, just execute the following:
+- If you want to run a batch job using HPC, just execute the following:
 
 ```sh
 sbatch fine-tune.sh
@@ -91,7 +91,7 @@ python ppo_trl.py
 
 - Check the `ScriptArguments` class in the file for more information.
 
-- If you want to run a batch job using ComputeCanada, just execute the following:
+- If you want to run a batch job using HPC, just execute the following:
 
 ```sh
 sbatch rl-fine-tune.sh
