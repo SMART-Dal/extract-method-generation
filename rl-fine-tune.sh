@@ -23,13 +23,6 @@ source .venv/bin/activate
 
 cd src/reinforcement-learning/
 
-# python ppo_trl.py \
-# --model_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output/code-t5-19k-15/checkpoint-32500 \
-# --tokenizer_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output/code-t5-19k-15/checkpoint-32500 \
-# --log_with wandb \
-# --train_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-large/preprocessed/train.jsonl \
-# --eval_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-large/preprocessed/val.jsonl 
-
 python ppo_trl.py \
 --model_name Salesforce/codet5-small \
 --tokenizer_name Salesforce/codet5-small \
