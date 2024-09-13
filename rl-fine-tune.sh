@@ -35,5 +35,5 @@ python ppo_trl.py \
 --tokenizer_name Salesforce/codet5-small \
 --log_with wandb \
 --model_save_path ./ppo-output-pretrained \
---train_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-large/preprocessed/len/test.jsonl \
+--train_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-large/preprocessed/len/train.jsonl \
 --eval_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-large/preprocessed/len/val.jsonl 
