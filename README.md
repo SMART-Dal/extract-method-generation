@@ -96,3 +96,7 @@ python ppo_trl.py
 ```sh
 sbatch rl-fine-tune.sh
 ```
+
+### Illustrative Example
+
+![example](assets\example.png)
