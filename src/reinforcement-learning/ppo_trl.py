@@ -270,32 +270,3 @@ for epoch, batch in tqdm(enumerate(train_dataloader)):
 
 ppo_trainer.save_pretrained(model_save_path)
 print("End of program")
-
-"""
-python ppo_trl.py 
---model_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output/code-t5-fine-tuned 
---tokenizer_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output/code-t5-fine-tuned 
---log_with wandb 
---train_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context-len/train.jsonl 
---eval_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-no-context-len/val.jsonl
-"""
-
-"""
-python ppo_trl.py
---model_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output/code-t5-19k-10
---tokenizer_name /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/src/refactoring-finetune/ft-scripts/output/code-t5-19k-10
---model_save_path ./ppo-output-test
---log_with wandb 
---train_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-large/preprocessed/train.jsonl 
---eval_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-large/preprocessed/val.jsonl 
-"""
-
-"""
-python ppo_trl.py
---model_name Salesforce/codet5-small
---tokenizer_name Salesforce/codet5-small
---model_save_path ./ppo-output-test
---log_with wandb 
---train_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-large/preprocessed/len/test.jsonl 
---eval_data_file_path /home/ip1102/projects/def-tusharma/ip1102/Ref_RL/POC/extract-method-generation/data/dl-large/preprocessed/len/val.jsonl 
-"""
